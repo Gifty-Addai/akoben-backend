@@ -17,9 +17,11 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-    origin: process.env.FRONTEND_URL,  // Frontend URL from .env or Vercel environment variable
-    methods:["GET","POST", "PUT", "DELETE", "PATCH", "OPTIONS"],  // Allowed methods
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'], 
+    origin: process.env.FRONTEND_URL,  // Ensure FRONTEND_URL is correctly set
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // Allowed methods
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'], // Allow specific headers
+    preflightContinue: false,  // Ensure the CORS response is sent automatically for preflight requests
+    optionsSuccessStatus: 204  // Some older browsers (like IE) may require this status
 }));
 
 const port = process.env.PORT || 3000;
@@ -37,17 +39,6 @@ app.use("/api/user", userRoute);
 app.use("/api/gallery", galleryRoute);
 app.use("/api/video", videoRoute);
 app.use("/api/testimony", testimonyRoute);
-
-// Handle preflight OPTIONS requests for CORS
-app.options('*', cors()); // Allow preflight requests for all routes
-
-// Uncomment and configure if you want to serve the frontend from the backend in production
-// if (process.env.NODE_ENV === 'production') {
-//     app.use(express.static(path.join(__dirname, "./frontend/dist")));
-//     app.get("*", (req, res) => {
-//         res.sendFile(path.resolve(__dirname, "./frontend/dist", "index.html"));
-//     });
-// }
 
 // Start the server and connect to the database
 app.listen(port, () => {
