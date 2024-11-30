@@ -19,7 +19,7 @@ const app = express();
 app.use(cors({
     origin: process.env.FRONTEND_URL,  // Frontend URL from .env or Vercel environment variable
     methods:["GET","POST", "PUT", "DELETE", "PATCH", "OPTIONS"],  // Allowed methods
-    allowedHeaders: ['Access-Control-Allow-Origin', 'Authorization'], 
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'], 
 }));
 
 const port = process.env.PORT || 3000;
