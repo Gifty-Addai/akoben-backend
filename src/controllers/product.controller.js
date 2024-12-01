@@ -1,45 +1,45 @@
 import Product from "../models/product.model.js";
+import { toProperCase } from "../lib/utils.js";
+
 
 export const createProduct = async (req, res, next) => {
 
     const { name, description, price, category, image, stock, isAvailable } = req.body;
 
     if (!name || !description || !price) {
-
-        return res.status(400).json({ message: "name, description, price, are required" })
+        return res.status(400).json({ message: "name, description, price, are required" });
     }
 
     try {
 
-        const productExit = await Product.findOne({ name });
+        const formattedName = toProperCase(name);
+        const formattedDescription = toProperCase(description);
+
+        const productExit = await Product.findOne({ name: formattedName });
         if (productExit) {
-            return res.status(400).json({ message: `Product with name: ${name} exist. Try and increase it's stock` });
+            return res.status(400).json({ message: `Product with name: ${formattedName} exists. Try and increase its stock` });
         }
 
-        const newProdut = new Product(
+        const newProduct = new Product(
             {
-                name: name,
-                description: description,
+                name: formattedName,
+                description: formattedDescription,
                 price: price,
                 category: category,
                 imageUrl: image,
                 isAvailable: isAvailable,
                 stock: stock
             }
-        )
+        );
 
-        await newProdut.save();
+        await newProduct.save();
 
         res.status(201).json({ message: 'Product created successfully!' });
 
-
     } catch (error) {
-        next(error)
-            ;
+        next(error);
     }
-
-
-}
+};
 
 export const getAllProducts = async (req, res, next) => {
     try {
@@ -67,15 +67,14 @@ export const getProductById = async (req, res, next) => {
 };
 
 export const searchProducts = async (req, res, next) => {
-    const { name, category, minPrice, maxPrice, isAvailable } = req.query;  // Use req.query instead of req.body
-
+    const { name, category, minPrice, maxPrice, isAvailable } = req.body;  
     try {
         const filters = {};
 
         // Case-insensitive search for 'name'
         if (name) {
-            filters.name = { $regex: new RegExp(name, 'i') }; // Using RegExp constructor for better handling
-        }
+            filters.name = { $regex: new RegExp(name, 'i') }; 
+         }
 
         // Optional case-insensitive category search
         if (category) filters.category = { $regex: new RegExp(category, 'i') };

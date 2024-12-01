@@ -79,6 +79,8 @@ import https from 'https';
 const initializePayment = async (req, res, next) => {
   const { amount, email, phone } = req.body;
 
+  console.log("Body",req.body)
+
   // Validate input fields
   if (!amount || !email || !phone) {
     return res.status(400).json({ message: 'Amount, email, and phone are required!' });
@@ -89,8 +91,8 @@ const initializePayment = async (req, res, next) => {
 
   const params = JSON.stringify({
     email: email,
-    amount: amount,
-    // phone: phone,  // Include phone if it's part of your request
+    amount: amount * 100,
+    phone: phone,  
     currency: 'GHS',
     channels: ['mobile_money'],
   });
@@ -153,30 +155,46 @@ const initializePayment = async (req, res, next) => {
 
 
 
-const verifyPayment = async (req, res, next) => {
+const verifyPayment = (req, res, next) => {
   const { reference } = req.params;
-
-  try {
-    const response = await axios.get(
-      `https://api.paystack.co/transaction/verify/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-        },
-      }
-    );
-
-    const paymentStatus = response.data.data.status;
-    if (paymentStatus === 'success') {
-      // Payment was successful, update order status
-      return res.json({ success: true, message: 'Payment successful', data: response.data.data });
-    } else {
-      return res.status(400).json({ success: false, message: 'Payment failed' });
+  const options = {
+    hostname: 'api.paystack.co',
+    port: 443,
+    path: `/transaction/verify/${reference}`,
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
     }
-  } catch (error) {
-    console.error('Error verifying payment: ', error.response?.data || error.message);
+  };
+
+  https.request(options, (response) => {
+    let data = '';
+
+    response.on('data', (chunk) => {
+      data += chunk;
+    });
+
+    response.on('end', () => {
+      try {
+        const parsedData = JSON.parse(data);
+        const paymentStatus = parsedData.data.status;
+
+        if (paymentStatus === 'success') {
+          // Payment was successful, send response
+          res.json({ success: true, message: 'Payment successful' });
+        } else {
+          // Payment failed
+          res.status(400).json({ success: false, message: 'Payment failed' });
+        }
+      } catch (error) {
+        console.error('Error parsing response: ', error.message);
+        next(error);
+      }
+    });
+  }).on('error', (error) => {
+    console.error('Error verifying payment: ', error.message);
     next(error);
-  }
-}
+  }).end();
+};
 
 export { signin, signup, logout, initializePayment, verifyPayment };

@@ -8,6 +8,6 @@ router.post('/signup', signup);
 router.post('/login', signin);
 router.post('/logout', logout);
 router.post('/payment',initializePayment)
-router.post('/verifypayment',verifyPayment)
+router.get('/verifypayment/:reference',verifyPayment)
 
 export default router;
