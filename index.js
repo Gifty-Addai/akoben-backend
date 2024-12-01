@@ -15,13 +15,12 @@ dotenv.config();
 
 const app = express();
 
-// CORS configuration
 app.use(cors({
-    origin: process.env.FRONTEND_URL,  // Ensure FRONTEND_URL is correctly set
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // Allowed methods
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'], // Allow specific headers
-    preflightContinue: false,  // Ensure the CORS response is sent automatically for preflight requests
-    optionsSuccessStatus: 204  // Some older browsers (like IE) may require this status
+    origin: process.env.FRONTEND_URL, 
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],
+    preflightContinue: false,  
+    optionsSuccessStatus: 204 
 }));
 
 const port = process.env.PORT || 3000;
