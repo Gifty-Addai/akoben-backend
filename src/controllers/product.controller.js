@@ -15,9 +15,9 @@ export const createProduct = async (req, res, next) => {
         const formattedName = toProperCase(name);
         const formattedDescription = toProperCase(description);
 
-        const productExit = await Product.findOne({ name: formattedName });
+        const productExit = await Product.findOne({ name: formattedDescription });
         if (productExit) {
-            return res.status(400).json({ message: `Product with name: ${formattedName} exists. Try and increase its stock` });
+            return res.status(400).json({ message: `Product with name: ${formattedName} exists with the description. Try editing the description` });
         }
 
         const newProduct = new Product(
@@ -119,7 +119,7 @@ export const updateProduct = async (req, res, next) => {
         if (category) product.category = category;
         if (image) product.imageUrl = image;
         if (stock) product.stock = stock;
-        if (isAvailable !== undefined) product.isAvailable = isAvailable; // Allow for boolean values (true/false)
+        if (isAvailable !== undefined) product.isAvailable = isAvailable;
 
         // Save the updated product
         await product.save();
