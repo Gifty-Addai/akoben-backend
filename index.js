@@ -7,14 +7,15 @@ import userRoute from "./src/routes/user.route.js";
 import videoRoute from "./src/routes/video.route.js";
 import testimonyRoute from "./src/routes/testimony.route.js";
 import dotenv from "dotenv";
-import path from 'path';
 import { connectDb } from "./src/lib/db.js";
 import cors from 'cors';
+import serverless from 'serverless-http';
 
 dotenv.config();
 
 const app = express();
 
+// CORS configuration
 app.use(cors({
     origin: process.env.FRONTEND_URL, 
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -22,10 +23,6 @@ app.use(cors({
     preflightContinue: false,  
     optionsSuccessStatus: 204 
 }));
-
-const port = process.env.PORT || 3000;
-
-const __dirname = path.resolve();
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -39,8 +36,6 @@ app.use("/api/gallery", galleryRoute);
 app.use("/api/video", videoRoute);
 app.use("/api/testimony", testimonyRoute);
 
-// Start the server and connect to the database
-app.listen(port, () => {
-    console.log(`Server started on port ${port}, ${process.env.FRONTEND_URL}`);
-    connectDb(); // Make sure the DB connection happens when the app starts
-});
+connectDb();
+
+export const handler = serverless(app);
