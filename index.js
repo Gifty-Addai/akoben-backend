@@ -1,7 +1,8 @@
+// index.js
 import express from "express";
 import authRoutes from "./src/routes/auth.route.js";
 import productRouter from "./src/routes/product.route.js";
-import bookinRoute from "./src/routes/booking.route.js";
+import bookingRoute from "./src/routes/booking.route.js";
 import galleryRoute from "./src/routes/gallery.route.js";
 import userRoute from "./src/routes/user.route.js";
 import videoRoute from "./src/routes/video.route.js";
@@ -30,12 +31,14 @@ app.use(express.json());
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/product", productRouter);
-app.use("/api/booking", bookinRoute);
+app.use("/api/booking", bookingRoute);
 app.use("/api/user", userRoute);
 app.use("/api/gallery", galleryRoute);
 app.use("/api/video", videoRoute);
 app.use("/api/testimony", testimonyRoute);
 
+// Connect to the database
 connectDb();
 
-export const handler = serverless(app);
+// Export the app as a serverless handler (default export)
+export default serverless(app);
