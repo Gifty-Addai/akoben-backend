@@ -3,7 +3,6 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from 'cors';
 import serverless from 'serverless-http';
-import path from 'path';
 
 // Import your routes
 import authRoutes from "./src/routes/auth.route.js";
@@ -30,8 +29,8 @@ app.use(cors({
     optionsSuccessStatus: 204 
 }));
 
-// Middleware to parse JSON requests
-app.use(express.json());
+// Middleware to parse JSON requests with increased limit if necessary
+app.use(express.json({ limit: '1mb' })); // Adjust the limit based on your needs
 
 // API routes
 app.use("/api/auth", authRoutes);
@@ -54,6 +53,12 @@ app.get('/', async (req, res) => {
         console.error('Error in default route:', error);
         res.status(500).send('Internal Server Error');
     }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+  res.status(500).send('Internal Server Error');
 });
 
 // Export the app as a serverless handler (default export)
