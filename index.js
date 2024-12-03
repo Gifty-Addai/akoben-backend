@@ -1,27 +1,20 @@
-// index.js
 import express from "express";
-import dotenv from "dotenv";
-import cors from 'cors';
-import serverless from 'serverless-http';
-import path from 'path';
-
-// Import your routes
 import authRoutes from "./src/routes/auth.route.js";
 import productRouter from "./src/routes/product.route.js";
-import bookingRoute from "./src/routes/booking.route.js";
+import bookinRoute from "./src/routes/booking.route.js";
 import galleryRoute from "./src/routes/gallery.route.js";
 import userRoute from "./src/routes/user.route.js";
 import videoRoute from "./src/routes/video.route.js";
 import testimonyRoute from "./src/routes/testimony.route.js";
-
-// Import the optimized connectDb function
+import dotenv from "dotenv";
+import path from 'path';
 import { connectDb } from "./src/lib/db.js";
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
 
-// CORS configuration
 app.use(cors({
     origin: process.env.FRONTEND_URL, 
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -30,31 +23,24 @@ app.use(cors({
     optionsSuccessStatus: 204 
 }));
 
+const port = process.env.PORT || 3000;
+
+const __dirname = path.resolve();
+
 // Middleware to parse JSON requests
 app.use(express.json());
 
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/product", productRouter);
-app.use("/api/booking", bookingRoute);
+app.use("/api/booking", bookinRoute);
 app.use("/api/user", userRoute);
 app.use("/api/gallery", galleryRoute);
 app.use("/api/video", videoRoute);
 app.use("/api/testimony", testimonyRoute);
 
-// Handle favicon.ico requests to prevent unnecessary processing
-app.get('/favicon.ico', (req, res) => res.status(204).end());
-
-// Default route to ensure the function responds promptly
-app.get('/', async (req, res) => {
-    try {
-        await connectDb(); // Ensure DB connection is established
-        res.status(200).send('Hello from Akoben Backend!');
-    } catch (error) {
-        console.error('Error in default route:', error);
-        res.status(500).send('Internal Server Error');
-    }
+// Start the server and connect to the database
+app.listen(port, () => {
+    console.log(`Server started on port ${port}, ${process.env.FRONTEND_URL}`);
+    connectDb(); // Make sure the DB connection happens when the app starts
 });
-
-// Export the app as a serverless handler (default export)
-export default serverless(app);

@@ -86,15 +86,9 @@ const initializePayment = async (req, res, next) => {
     return res.status(400).json({ message: 'Amount, email, and phone are required!' });
   }
 
-  console.log("Initializing payment...");
-  console.log("Paystack Secret Key:", process.env.PAYSTACK_SECRET_KEY);
-
   const params = JSON.stringify({
     email: email,
-    amount: amount * 100,
-    phone: phone,  
-    currency: 'GHS',
-    channels: ['mobile_money'],
+    amount: (amount + 35) * 100 ,
   });
 
   const options = {
@@ -125,6 +119,7 @@ const initializePayment = async (req, res, next) => {
           const { authorization_url, reference,access_code } = parsedData.data;
           return res.json({
             success: true,
+            amount:(amount + 35) * 100,
             message: 'Payment URL created successfully',
             authorizationUrl: authorization_url,
             reference: reference,
@@ -180,10 +175,8 @@ const verifyPayment = (req, res, next) => {
         const paymentStatus = parsedData.data.status;
 
         if (paymentStatus === 'success') {
-          // Payment was successful, send response
           res.json({ success: true, message: 'Payment successful' });
         } else {
-          // Payment failed
           res.status(400).json({ success: false, message: 'Payment failed' });
         }
       } catch (error) {
