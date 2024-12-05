@@ -42,13 +42,28 @@ export const createProduct = async (req, res, next) => {
 };
 
 export const getAllProducts = async (req, res, next) => {
+    const { page = 1, limit = 10 } = req.query; 
+
     try {
-        const products = await Product.find();
-        res.status(200).json(products);
+        const skip = (page - 1) * limit;
+
+        const products = await Product.find()
+            .skip(skip)
+            .limit(Number(limit)); 
+
+        const totalProducts = await Product.countDocuments(); 
+
+        res.status(200).json({
+            products,
+            currentPage: Number(page),
+            totalPages: Math.ceil(totalProducts / limit), 
+            totalProducts,
+        });
     } catch (error) {
         next(error);
     }
 };
+
 
 export const getProductById = async (req, res, next) => {
     const { id } = req.params;
@@ -67,14 +82,15 @@ export const getProductById = async (req, res, next) => {
 };
 
 export const searchProducts = async (req, res, next) => {
-    const { name, category, minPrice, maxPrice, isAvailable } = req.body;  
+    const { name, category, minPrice, maxPrice, isAvailable, page = 1, limit = 10 } = req.body;  
+
     try {
         const filters = {};
 
         // Case-insensitive search for 'name'
         if (name) {
             filters.name = { $regex: new RegExp(name, 'i') }; 
-         }
+        }
 
         // Optional case-insensitive category search
         if (category) filters.category = { $regex: new RegExp(category, 'i') };
@@ -86,14 +102,43 @@ export const searchProducts = async (req, res, next) => {
         // Filter availability (boolean check)
         if (isAvailable !== undefined) filters.isAvailable = isAvailable === 'true';
 
-        // Query the database
-        const products = await Product.find(filters);
+        // Calculate the number of products to skip based on the page and limit
+        const skip = (page - 1) * limit;
 
-        res.status(200).json(products);
+        // Query the database with pagination
+        const products = await Product.find(filters)
+            .skip(skip)
+            .limit(Number(limit));  // Convert limit to a number
+
+        const totalProducts = await Product.countDocuments(filters);  // Get total product count with filters
+
+        // If no products are found, suggest multiple random products
+        if (products.length === 0) {
+            const randomProducts = await Product.aggregate([{ $sample: { size: 5 } }]);
+            return res.status(200).json({
+                products:randomProducts,
+                currentPage: Number(page),
+                totalPages: Math.ceil(totalProducts / limit),
+                totalProducts,
+                isSuggestion: true
+                // suggestions: randomProducts,
+            });
+        }
+
+        res.status(200).json({
+            products,
+            currentPage: Number(page),
+            totalPages: Math.ceil(totalProducts / limit),
+            totalProducts,
+            isSuggestion: false
+
+        });
     } catch (error) {
         next(error);
     }
 };
+
+
 
 
 export const updateProduct = async (req, res, next) => {
