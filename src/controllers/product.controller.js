@@ -82,37 +82,38 @@ export const getProductById = async (req, res, next) => {
 };
 
 export const searchProducts = async (req, res, next) => {
-    const { name, category, minPrice, maxPrice, isAvailable, page = 1, limit = 10 } = req.body;  
+    let { name, category, minPrice, maxPrice, isAvailable, page = 1, limit = 10 } = req.body;  
 
     try {
         const filters = {};
 
-        // Case-insensitive search for 'name'
+        if(name || category && page != 1){
+            page = 1
+        }
+
         if (name) {
             filters.name = { $regex: new RegExp(name, 'i') }; 
         }
 
-        // Optional case-insensitive category search
         if (category) filters.category = { $regex: new RegExp(category, 'i') };
 
-        // Filter by price range if provided
         if (minPrice) filters.price = { ...filters.price, $gte: Number(minPrice) };
         if (maxPrice) filters.price = { ...filters.price, $lte: Number(maxPrice) };
 
-        // Filter availability (boolean check)
-        if (isAvailable !== undefined) filters.isAvailable = isAvailable === 'true';
-
-        // Calculate the number of products to skip based on the page and limit
+        if (isAvailable !== undefined) {
+            // Ensure `isAvailable` is treated as a boolean value
+            filters.isAvailable = isAvailable === 'true' || isAvailable === true;
+        }
+        
         const skip = (page - 1) * limit;
 
         // Query the database with pagination
         const products = await Product.find(filters)
             .skip(skip)
-            .limit(Number(limit));  // Convert limit to a number
+            .limit(Number(limit));
 
-        const totalProducts = await Product.countDocuments(filters);  // Get total product count with filters
+        const totalProducts = await Product.countDocuments(filters);
 
-        // If no products are found, suggest multiple random products
         if (products.length === 0) {
             const randomProducts = await Product.aggregate([{ $sample: { size: 5 } }]);
             return res.status(200).json({
@@ -121,7 +122,6 @@ export const searchProducts = async (req, res, next) => {
                 totalPages: Math.ceil(totalProducts / limit),
                 totalProducts,
                 isSuggestion: true
-                // suggestions: randomProducts,
             });
         }
 

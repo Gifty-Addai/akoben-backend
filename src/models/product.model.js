@@ -15,9 +15,9 @@ const productSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['camping', 'others'],
+    enum: ['accessories','camping light','cookwear', 'others'],
     required: false,
-    default:"camping"
+    default:"accessories"
   },
   stock: {
     type: Number,
