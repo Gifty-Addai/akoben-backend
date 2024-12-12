@@ -42,21 +42,21 @@ export const createProduct = async (req, res, next) => {
 };
 
 export const getAllProducts = async (req, res, next) => {
-    const { page = 1, limit = 10 } = req.query; 
+    const { page = 1, limit = 10 } = req.query;
 
     try {
         const skip = (page - 1) * limit;
 
         const products = await Product.find()
             .skip(skip)
-            .limit(Number(limit)); 
+            .limit(Number(limit));
 
-        const totalProducts = await Product.countDocuments(); 
+        const totalProducts = await Product.countDocuments();
 
         res.status(200).json({
             products,
             currentPage: Number(page),
-            totalPages: Math.ceil(totalProducts / limit), 
+            totalPages: Math.ceil(totalProducts / limit),
             totalProducts,
         });
     } catch (error) {
@@ -82,17 +82,17 @@ export const getProductById = async (req, res, next) => {
 };
 
 export const searchProducts = async (req, res, next) => {
-    let { name, category, minPrice, maxPrice, isAvailable, page = 1, limit = 10 } = req.body;  
+    let { name, category, minPrice, maxPrice, isAvailable, page = 1, limit = 10 } = req.body;
 
     try {
         const filters = {};
 
-        if(name || category && page != 1){
+        if (name || category && page != 1) {
             page = 1
         }
 
         if (name) {
-            filters.name = { $regex: new RegExp(name, 'i') }; 
+            filters.name = { $regex: new RegExp(name, 'i') };
         }
 
         if (category) filters.category = { $regex: new RegExp(category, 'i') };
@@ -101,10 +101,9 @@ export const searchProducts = async (req, res, next) => {
         if (maxPrice) filters.price = { ...filters.price, $lte: Number(maxPrice) };
 
         if (isAvailable !== undefined) {
-            // Ensure `isAvailable` is treated as a boolean value
             filters.isAvailable = isAvailable === 'true' || isAvailable === true;
         }
-        
+
         const skip = (page - 1) * limit;
 
         // Query the database with pagination
@@ -115,12 +114,16 @@ export const searchProducts = async (req, res, next) => {
         const totalProducts = await Product.countDocuments(filters);
 
         if (products.length === 0) {
-            const randomProducts = await Product.aggregate([{ $sample: { size: 5 } }]);
+            const randomProducts = await Product.aggregate([
+                { $match: { isAvailable: true } },
+                { $sample: { size: 100 } },
+            ]); 
+            
             return res.status(200).json({
-                products:randomProducts,
+                products: randomProducts,
                 currentPage: Number(page),
                 totalPages: Math.ceil(totalProducts / limit),
-                totalProducts,
+                totalProducts: randomProducts.length,
                 isSuggestion: true
             });
         }
@@ -142,7 +145,7 @@ export const searchProducts = async (req, res, next) => {
 
 
 export const updateProduct = async (req, res, next) => {
-    const { name, description, price, category, image,stock, isAvailable } = req.body;
+    const { name, description, price, category, image, stock, isAvailable } = req.body;
     const { id } = req.params;
 
     if (!name && !description && !price && !category && !image && !isAvailable) {
