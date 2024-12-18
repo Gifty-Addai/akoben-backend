@@ -6,6 +6,11 @@ const bookingSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  trip: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Trip',
+    required: true,
+  },
   campsite: {
     type: String,
   },
@@ -28,8 +33,25 @@ const bookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'cancelled'],
+    enum: ['pending', 'confirmed', 'cancelled','reschedule'],
     default: 'pending',
+  },
+  payment: {
+    status: {
+      type: String,
+      enum: ['pending', 'completed', 'failed'],
+      default: 'pending',
+    },
+    date: {
+      type: Date,
+    },
+    transactionId: {
+      type: String,
+      required: false,
+    },
+  },
+  rescheduleDate:{
+    type: Date
   },
   specialRequests: {
     type: String,

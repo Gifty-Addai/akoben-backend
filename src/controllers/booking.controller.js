@@ -1,16 +1,19 @@
-import Booking from '../models/booking.model.js';
+import Booking from "../models/booking.model.js";
+import { validateBookingData } from "../lib/validations.util.js";
 
-// Create a new booking
 export const createBooking = async (req, res, next) => {
-  const { user, campsite, campingDate, numberOfPeople, totalCost, specialRequests } = req.body;
+  const { user, trip, campsite, campingDate, numberOfPeople, totalCost, specialRequests } = req.body;
 
-  if (!user || !campingDate || !numberOfPeople || !totalCost) {
-    return res.status(400).json({ message: "User, campingDate, numberOfPeople, and totalCost are required." });
+  // Validate input data
+  const validationErrors = validateBookingData(req.body);
+  if (validationErrors.length > 0) {
+    return res.status(400).json({ message: "Validation errors", errors: validationErrors });
   }
 
   try {
-    const newBooking = new Booking({
+    const booking = new Booking({
       user,
+      trip,
       campsite,
       campingDate,
       numberOfPeople,
@@ -18,65 +21,91 @@ export const createBooking = async (req, res, next) => {
       specialRequests,
     });
 
-    await newBooking.save();
-    res.status(201).json({ message: 'Booking created successfully!', booking: newBooking });
+    // Save booking
+    await booking.save();
+
+    // Send confirmation email or notification (Optional)
+    // sendConfirmationEmail(user, booking); // Implement this function as needed
+
+    res.status(201).json({ message: "Booking created successfully!", booking });
   } catch (error) {
-    next(error);
+    console.error("Error creating booking:", error); // Log error details
+    res.status(500).json({ message: "Internal server error. Please try again." });
   }
 };
 
-// Get all bookings
 export const getAllBookings = async (req, res, next) => {
+  const { page = 1, limit = 10, status } = req.query;
+
   try {
-    const bookings = await Booking.find().populate('user', 'name email');
-    res.status(200).json(bookings);
+    const filters = {};
+    if (status) filters.status = status;
+
+    const skip = (page - 1) * limit;
+    const bookings = await Booking.find(filters)
+      .populate('trip user')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    const totalBookings = await Booking.countDocuments(filters);
+
+    res.status(200).json({
+      bookings,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalBookings / limit),
+      totalBookings,
+    });
   } catch (error) {
     next(error);
   }
 };
 
-// Get a single booking by ID
+
 export const getBookingById = async (req, res, next) => {
+  const { id } = req.params;
+
   try {
-    const booking = await Booking.findById(req.params.id).populate('user', 'name email');
+    const booking = await Booking.findById(id).populate('trip user');
+
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found.' });
+      return res.status(404).json({ message: `Booking with id: ${id} not found` });
     }
+
     res.status(200).json(booking);
   } catch (error) {
     next(error);
   }
 };
 
-// Update a booking
 export const updateBooking = async (req, res, next) => {
-  try {
-    const updatedBooking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true }
-    );
+  const { id } = req.params;
+  const updates = req.body;
 
-    if (!updatedBooking) {
-      return res.status(404).json({ message: 'Booking not found.' });
+  try {
+    const booking = await Booking.findByIdAndUpdate(id, updates, { new: true });
+
+    if (!booking) {
+      return res.status(404).json({ message: `Booking with id: ${id} not found` });
     }
 
-    res.status(200).json({ message: 'Booking updated successfully!', booking: updatedBooking });
+    res.status(200).json({ message: "Booking updated successfully!", booking });
   } catch (error) {
     next(error);
   }
 };
 
-// Delete a booking
 export const deleteBooking = async (req, res, next) => {
-  try {
-    const deletedBooking = await Booking.findByIdAndDelete(req.params.id);
+  const { id } = req.params;
 
-    if (!deletedBooking) {
-      return res.status(404).json({ message: 'Booking not found.' });
+  try {
+    const booking = await Booking.findByIdAndDelete(id);
+
+    if (!booking) {
+      return res.status(404).json({ message: `Booking with id: ${id} not found` });
     }
 
-    res.status(200).json({ message: 'Booking deleted successfully!' });
+    res.status(200).json({ message: "Booking deleted successfully!" });
   } catch (error) {
     next(error);
   }

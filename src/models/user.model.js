@@ -48,6 +48,50 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  age: {
+    type: Number,
+    required: false,
+  },
+  isMember: {
+    type: Boolean,
+    default: false,
+  },
+  image: {
+    type: String,
+    required: false,
+  },
+  recentTrip: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Trip',
+  },
+  nextRenewalDate: {
+    type: Date,
+    required: false,
+  },
+  latestPaymentDate: {
+    type: Date,
+    required: false,
+  },
+  latestPaymentAmount: {
+    type: Number,
+    required: false,
+  },
+  nextTrip: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Trip',
+  },
+  hasDiscount: {
+    type: Boolean,
+    default: false,
+  },
+  idCard: {
+    type: String,
+    required: false,
+  },
+  active: {
+    type: Boolean,
+    default: true,
+  },
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
