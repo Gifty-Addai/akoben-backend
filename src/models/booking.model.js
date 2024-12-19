@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
 const bookingSchema = new mongoose.Schema({
-  user: {
+  tempUser: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'TempUser',
     required: true,
   },
   trip: {
@@ -11,12 +11,14 @@ const bookingSchema = new mongoose.Schema({
     ref: 'Trip',
     required: true,
   },
-  campsite: {
+  selectedDateId: {
     type: String,
-  },
-  campingDate: {
-    type: Date,
     required: true,
+  },
+  participing :{
+    type : Boolean,
+    required : false,
+    default : true
   },
   numberOfPeople: {
     type: Number,
@@ -27,34 +29,18 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  totalCost: {
-    type: Number,
-    required: true,
+  payment:{
+    type : Boolean,
+    required: false,
+    default : false
   },
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'cancelled','reschedule'],
     default: 'pending',
   },
-  payment: {
-    status: {
-      type: String,
-      enum: ['pending', 'completed', 'failed'],
-      default: 'pending',
-    },
-    date: {
-      type: Date,
-    },
-    transactionId: {
-      type: String,
-      required: false,
-    },
-  },
   rescheduleDate:{
     type: Date
-  },
-  specialRequests: {
-    type: String,
   },
 }, { timestamps: true });
 
