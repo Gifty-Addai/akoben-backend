@@ -4,6 +4,8 @@ import { validateBookingData } from "../lib/validations.util.js";
 import { checkTempUser } from '../services/user-temp.service.js';
 import { addParticipant } from '../services/trip.service.js';
 import AppError from "../lib/app-error.util.js";
+import { sendMail } from "../services/mail.service.js";
+import { bookingPending } from "../html/htmls.js";
 
 export const createBooking = async (req, res, next) => {
   const {
@@ -87,8 +89,15 @@ export const createBooking = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
-    // Optionally, send a confirmation email or notification here
-    // sendConfirmationEmail(tempUser, booking); // Implement this function as needed
+    const htmlBody = bookingPending({
+      fullName,
+      bookingId: booking._id,
+      tripId,
+      selectedDate,
+      numberOfPeople
+    });
+    
+    sendMail(personalInfo.email, "Booking Pending - Fie Ne Fie", htmlBody);
 
     res.status(201).json({ success: true, message: "Booking created successfully!", booking });
   } catch (error) {
