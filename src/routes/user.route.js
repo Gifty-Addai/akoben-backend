@@ -8,6 +8,7 @@ import {
   updateUserById,
   verifyEmail,
   resetPassword,
+  confirmMembership
 } from '../controllers/user.controller.js';
 
 const router = express.Router();
@@ -19,8 +20,7 @@ router.post('/reset-password', resetPassword);
 // Authenticated User Routes
 router.get('/profile', getUserProfile);
 router.put('/profile', updateUserProfile);
-
-// Admin Routes
+router.post('/confirmMembership', confirmMembership);
 router.get('/', getAllUsers);
 router.get('/:id', getUserById);
 router.put('/:id', updateUserById);
