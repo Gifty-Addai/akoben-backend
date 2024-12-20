@@ -19,7 +19,7 @@ export const createBooking = async (req, res, next) => {
   // Validate input data
   const validationErrors = validateBookingData(req.body);
   if (validationErrors.length > 0) {
-    return next(new AppError(400, "Validation errors"));
+    return next(new AppError(400, validationErrors));
   }
 
   // Start a session for transaction
@@ -96,7 +96,7 @@ export const createBooking = async (req, res, next) => {
       selectedDate,
       numberOfPeople
     });
-    
+
     sendMail(personalInfo.email, "Booking Pending - Fie Ne Fie", htmlBody);
 
     res.status(201).json({ success: true, message: "Booking created successfully!", booking });
