@@ -1,12 +1,13 @@
 import { Trip } from "../models/trip.model.js";
 import { validateTripData } from "../lib/validations.util.js";
 import mongoose from "mongoose";
+import ApiResponse from "../lib/api-reponse.util.js";
 
 export const createTrips = async (req, res, next) => {
   const trips = req.body;
 
   if (!Array.isArray(trips) || trips.length === 0) {
-    return res.status(400).json({ message: "A valid array of trips must be provided." });
+    return ApiResponse.sendError(res, "A valid array of trips must be provided", 400)
   }
 
   const createdTrips = [];
@@ -43,10 +44,12 @@ export const createTrips = async (req, res, next) => {
   }
 
   if (createdTrips.length > 0) {
-    res.status(201).json({ message: "Trips created successfully!", trips: createdTrips });
+    return ApiResponse.sendSuccess(res, "A valid array of trips must be provided", createdTrips, 200)
   }
   if (errors.length > 0) {
-    res.status(400).json({ message: "Some trips could not be created due to validation errors.", errors });
+    return ApiResponse.sendError(res, "Some trips could not be created due to validation errors.", 400)
+
+    // res.status(400).json({ message: "Some trips could not be created due to validation errors.", errors });
   }
 };
 
@@ -55,7 +58,9 @@ export const createTrip = async (req, res, next) => {
 
   const validationErrors = validateTripData(tripData);
   if (validationErrors.length > 0) {
-    return res.status(400).json({ message: "Validation errors", errors: validationErrors });
+    return ApiResponse.sendError(res, "Validation error(s)", 400)
+
+    // return res.status(400).json({ message: "Validation errors", errors: validationErrors });
   }
 
   try {
@@ -68,14 +73,14 @@ export const createTrip = async (req, res, next) => {
     });
 
     if (existingTrip) {
-      return res.status(409).json({ message: "A trip with the same name, location, and schedule already exists." });
+      return ApiResponse.sendError(res, "A trip with the same name, location, and schedule already exists.", 409)
     }
 
     const trip = new Trip(tripData);
     await trip.save();
-    res.status(201).json({ message: "Trip created successfully!", trip });
+    return ApiResponse.sendSuccess(res, "Trip created successfully!", trip, 200)
+
   } catch (error) {
-    console.error("Error creating trip:", error);
     next(error);
   }
 };
@@ -92,15 +97,13 @@ export const getAllTrips = async (req, res, next) => {
     const trips = await Trip.find(filters).skip(skip).limit(Number(limit));
     const totalTrips = await Trip.countDocuments(filters);
 
-    res.status(200).json({
+    return ApiResponse.sendSuccess(res, "Available Trips", {
       trips,
       currentPage: Number(page),
       totalPages: Math.ceil(totalTrips / limit),
       totalTrips,
-    });
+    }, 200)
   } catch (error) {
-    console.error("Error fetching trips:", error);
-    res.status(500).json({ message: "Internal server error while fetching trips." });
     next(error);
   }
 };
@@ -108,26 +111,41 @@ export const getAllTrips = async (req, res, next) => {
 export const getTripById = async (req, res, next) => {
   const { id } = req.params;
 
+  // Validate the ObjectId
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: `Invalid trip ID: ${id}` });
+    return ApiResponse.sendError(res, "Invalid Trip ID provided.", 400);
   }
 
   try {
-    const trip = await Trip.findById(id).populate('participants');
+    const trip = await Trip.findById(id)
+      .populate({
+        path: 'schedule.dates.participants',
+        select: 'name email' 
+      })
+      .exec();
+
     if (!trip) {
-      return res.status(404).json({ message: `Trip with id: ${id} not found` });
+      return ApiResponse.sendError(res, "Trip not found.", 404);
     }
 
-    trip.schedule.dates = trip.schedule.dates.map(date => ({
-      ...date.toObject(),
-      slotsRemaining: trip.groupSize.max - trip.participants.length
-    }));
+    const updatedDates = trip.schedule.dates.map(date => {
+      const participantsCount = date.participants.length;
+      const slotsRemaining = trip.groupSize.max - participantsCount;
+      const isAvailable = participantsCount === trip.groupSize.max ? false : true
 
-    res.status(200).json(trip);
+      return {
+        ...date.toObject(),
+        slotsRemaining: slotsRemaining >= 0 ? slotsRemaining : 0,
+        isAvailable : isAvailable
+      };
+    });
+
+    const tripObject = trip.toObject();
+    tripObject.schedule.dates = updatedDates;
+
+    return ApiResponse.sendSuccess(res, "Trip retrieved successfully.", tripObject, 200);
   } catch (error) {
-    console.error("Error fetching trip by ID:", error);
-    res.status(500).json({ message: "Internal server error while fetching trip." });
-    next(error);
+    return next(error);
   }
 };
 
@@ -264,15 +282,14 @@ export const searchTrips = async (req, res, next) => {
       Trip.countDocuments(query),
     ]);
 
-    res.status(200).json({
+    return ApiResponse.sendSuccess(res, "Searched found", {
       trips,
       currentPage: pageNumber,
       totalPages: Math.ceil(totalTrips / limitNumber),
       totalTrips,
-    });
+    }, 200)
+
   } catch (error) {
-    console.error("Error searching trips:", error);
-    res.status(500).json({ message: "Internal server error while searching trips." });
     next(error);
   }
 };
@@ -283,23 +300,22 @@ export const updateTrip = async (req, res, next) => {
   const updates = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: `Invalid trip ID: ${id}` });
+    return ApiResponse.sendError(res, "Invalid Id", 400)
   }
 
   const validationErrors = validateTripUpdateData(updates);
   if (validationErrors.length > 0) {
-    return res.status(400).json({ message: "Validation errors", errors: validationErrors });
+    return ApiResponse.sendError(res, "Validation error(s)", 400)
   }
 
   try {
     const trip = await Trip.findByIdAndUpdate(id, updates, { new: true });
     if (!trip) {
-      return res.status(404).json({ message: `Trip with id: ${id} not found` });
+      return ApiResponse.sendError(res, "Trip not found", 404)
     }
-    res.status(200).json({ message: "Trip updated successfully!", trip });
+
+    return ApiResponse.sendSuccess(res, "Trip uppdated successfully", 200);
   } catch (error) {
-    console.error("Error updating trip:", error);
-    res.status(500).json({ message: "Internal server error while updating trip." });
     next(error);
   }
 };
@@ -308,18 +324,16 @@ export const deleteTrip = async (req, res, next) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: `Invalid trip ID: ${id}` });
+    return ApiResponse.sendError(res, "Invalid trip ID", 400)
   }
 
   try {
     const trip = await Trip.findByIdAndDelete(id);
     if (!trip) {
-      return res.status(404).json({ message: `Trip with id: ${id} not found` });
+      return ApiResponse.sendError(res, "Trip not found", 404)
     }
-    res.status(200).json({ message: "Trip deleted successfully!" });
+    return ApiResponse.sendSuccess(res, "Trip deleted successfully", 200)
   } catch (error) {
-    console.error("Error deleting trip:", error);
-    res.status(500).json({ message: "Internal server error while deleting trip." });
     next(error);
   }
 };

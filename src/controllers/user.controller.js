@@ -1,6 +1,8 @@
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import { checkTempUser } from '../services/user-temp.service.js';
+import ApiResponse from '../lib/api-reponse.util.js';
 // import Joi from 'joi'; // Uncomment if using Joi for validation
 
 // Optional: Validate MongoDB ObjectId
@@ -18,29 +20,23 @@ const updateUserSchema = Joi.object({
 
 // Get User Profile
 export const getUserProfile = async (req, res, next) => {
-  const { id } = req.user; // Assume `req.user` is set by authentication middleware
-
+  const { id } = req.user.id;
   try {
     if (!isValidObjectId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID.",
-      });
+
+      return ApiResponse.sendError(res,"Invalid user ID.",400);
     }
 
     const user = await User.findById(id)
-      .select('-password') // Always exclude password
+      .select('-password') 
       .populate('bookings', 'campsite campingDate');
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return ApiResponse.sendError(res,"User not found.",400);
     }
 
-    res.status(200).json({
-      success: true,
-      message: "User profile retrieved successfully.",
-      user,
-    });
+    return ApiResponse.sendSuccess(res,"",user,200)
+  
   } catch (error) {
     next(error);
   }
@@ -54,55 +50,50 @@ export const confirmMembership = async (req, res, next) => {
 
   // Validate required fields
   if (!name || !email || !phone) {
-    return res.status(400).json({
-      success: false,
-      message: "Name, email, and phone are required.",
-    });
+    return ApiResponse.sendError(res,"Name, email, and phone are required.",400)
   }
 
   try {
-    const user = await User.findOne({ name, email, phone });
+    const user = await checkTempUser(
+      name,
+      phone,
+      email
+    );
 
     if (!user) {
-      return res.status(200).json({
-        success: false,
-        message: "No user found with the provided details.",
-      });
+      return ApiResponse.sendError(res, "Unable to use user details", 400)
     }
 
     if (!user.isMember) {
-      return res.status(200).json({
-        success: false,
-        message: "User found but is not a member.",
-        user: {
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-        },
-      });
+      return ApiResponse.sendSuccess(res, "User found but is not a member.", {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        isMember: user.isMember,
+        membershipExpired: true,
+      }, 200)
+
     }
 
     // Optional: Check membership validity (if nextRenewalDate is used)
     const today = new Date();
     if (user.nextRenewalDate && user.nextRenewalDate < today) {
-      return res.status(200).json({
-        success: false,
-        message: "User is a member, but their membership has expired.",
-        membershipExpired: true,
-        renewalDate: user.nextRenewalDate,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "User is an active member.",
-      user: {
+      return ApiResponse.sendSuccess(res, "User is a member, but their membership has expired.", {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        nextRenewalDate: user.nextRenewalDate,
-      },
-    });
+        isMember: user.isMember,
+        membershipExpired: true,
+      }, 200)
+    }
+
+    return ApiResponse.sendSuccess(res, "User is an active member.", {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      isMember: user.isMember,
+      membershipExpired: false,
+    }, 200)
 
   } catch (error) {
     next(error);

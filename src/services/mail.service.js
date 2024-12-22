@@ -71,7 +71,7 @@ export const sendMail = async (to, subject, htmlBody) => {
                 "To": [
                     {
                         "Email": to,
-                        "Name": "Recipient Name" // Optional
+                        "Name": "Recipient Name" 
                     }
                 ],
                 "Subject": subject,
