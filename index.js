@@ -20,6 +20,7 @@ import errorHandler from "./src/middlewares/exceptionHandler.middleware.js";
 
 // Import database connection
 import { connectDb } from "./src/lib/db.js";
+import ApiResponse from "./src/lib/api-reponse.util.js";
 
 dotenv.config();
 
@@ -51,10 +52,7 @@ app.use("/api/testimony", testimonyRoute);
 
 // Handle 404 for undefined routes
 app.use((req, res, next) => {
-  res.status(404).json({
-    status: 'error',
-    message: 'Not Found',
-  });
+  ApiResponse.sendError(res, "Endpoint not found", 404);
 });
 
 // Centralized Error Handling Middleware (should be last)
@@ -63,5 +61,5 @@ app.use(errorHandler);
 // Start the server and connect to the database
 app.listen(port, () => {
     console.log(`Server started on port ${port}, ${process.env.FRONTEND_URL}`);
-    connectDb(); // Ensure the DB connection happens when the app starts
+    connectDb();
 });

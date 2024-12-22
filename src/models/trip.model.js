@@ -29,7 +29,13 @@ const tripDateSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Slots remaining is required.'],
     min: [0, 'Slots remaining cannot be negative.']
-  }
+  },
+  participants: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: [],
+    unique:false
+  }]
 });
 
 const tripSchema = new mongoose.Schema({
@@ -90,10 +96,6 @@ const tripSchema = new mongoose.Schema({
     type: locationSchema,
     required: [true, 'Location details are required.']
   },
-  participants: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  }],
   cost: {
     basePrice: {
       type: Number,
@@ -142,7 +144,7 @@ const tripSchema = new mongoose.Schema({
     type: String,
     trim: true,
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))$/.test(value);
       },
       message: props => `${props.value} is not a valid image URL.`
