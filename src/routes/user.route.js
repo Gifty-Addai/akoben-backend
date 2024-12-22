@@ -10,6 +10,7 @@ import {
   resetPassword,
   confirmMembership
 } from '../controllers/user.controller.js';
+import authenticate from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.post('/verify-email', verifyEmail);
 router.post('/reset-password', resetPassword);
 
 // Authenticated User Routes
-router.get('/profile', getUserProfile);
+router.get('/profile', authenticate, getUserProfile);
 router.put('/profile', updateUserProfile);
 router.post('/confirmMembership', confirmMembership);
 router.get('/', getAllUsers);

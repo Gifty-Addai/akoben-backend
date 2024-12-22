@@ -5,24 +5,24 @@ import mongoose from 'mongoose';
 import https from 'https';
 import ApiResponse from '../lib/api-reponse.util.js';
 import Booking from '../models/booking.model.js';
-import  verifyPayment  from '../services/paymentService.js'
+import verifyPayment from '../services/paymentService.js'
 
 
 const signup = async (req, res, next) => {
   console.log('Request Body:', req.body);
   const { name, email, password, phone } = req.body;
 
+  // Validate input fields
   if (!email || !password || !name || !phone) {
-    return res.status(400).json({ message: 'All fields are required!' });
+    return ApiResponse.sendError(res, 'All fields are required!', 400);
   }
 
+  const normalizedEmail = email.toLowerCase();
+
   try {
-
-    email = email.toLowerCase();
-
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already in use' });
+      return ApiResponse.sendError(res, 'Email already in use', 400);
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -30,16 +30,16 @@ const signup = async (req, res, next) => {
 
     const newUser = new User({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       phone,
     });
 
     await newUser.save();
 
-    // send a verification email here
+    // TODO: Implement email verification
 
-    res.status(201).json({ message: 'User registered successfully!' });
+    return ApiResponse.sendSuccess(res, 'User registered successfully!', 201);
   } catch (error) {
     console.error(error);
     next(error);
@@ -49,26 +49,28 @@ const signup = async (req, res, next) => {
 const signin = async (req, res, next) => {
   const { email, password } = req.body;
 
-  email = email.toLowerCase();
-
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required!' });
+    return ApiResponse.sendError(res, 'Email and password are required!', 400);
   }
 
+  const normalizedEmail = email.toLowerCase();
+
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return ApiResponse.sendError(res, 'Invalid credentials', 400);
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return ApiResponse.sendError(res, 'Invalid credentials', 400);
     }
 
     const token = generateToken(user._id, res);
 
-    res.json({ message: 'Login successful', user: { id: user._id, name: user.name, role: user.role }, token });
+    return ApiResponse.sendSuccess(res, 'Login successful', {
+      user: { id: user._id, name: user.name, role: user.role }
+    });
   } catch (error) {
     console.error(error);
     next(error);
@@ -171,7 +173,7 @@ const initializePayment = async (req, res, next) => {
 
       // Check if reference and authorizationUrl already exist
       if (existingBooking.payment === true && existingBooking.reference) {
-        return ApiResponse.sendError(res, "Payment Done for this detail under review",400);
+        return ApiResponse.sendError(res, "Payment Done for this detail under review", 400);
       }
     }
 
@@ -306,4 +308,4 @@ const verifyBookingPayment = async (req, res, next) => {
   }
 };
 
-export { signin, signup, logout, initializePayment,verifyBookingPayment, genVerifyPayment };
+export { signin, signup, logout, initializePayment, verifyBookingPayment, genVerifyPayment };

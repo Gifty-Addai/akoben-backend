@@ -20,29 +20,23 @@ const updateUserSchema = Joi.object({
 
 // Get User Profile
 export const getUserProfile = async (req, res, next) => {
-  const { id } = req.user; // Assume `req.user` is set by authentication middleware
-
+  const { id } = req.user.id;
   try {
     if (!isValidObjectId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID.",
-      });
+
+      return ApiResponse.sendError(res,"Invalid user ID.",400);
     }
 
     const user = await User.findById(id)
-      .select('-password') // Always exclude password
+      .select('-password') 
       .populate('bookings', 'campsite campingDate');
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return ApiResponse.sendError(res,"User not found.",400);
     }
 
-    res.status(200).json({
-      success: true,
-      message: "User profile retrieved successfully.",
-      user,
-    });
+    return ApiResponse.sendSuccess(res,"",user,200)
+  
   } catch (error) {
     next(error);
   }

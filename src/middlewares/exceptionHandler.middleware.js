@@ -8,19 +8,9 @@ const errorHandler = (err, req, res, next) => {
   if (!(err instanceof AppError)) {
     return ApiResponse.sendError(res, message, err.status || 500);
 
-    // return res.status(500).json({
-    //   success:false,
-    //   status: 'error',
-    //   message: 'Internal Server Error',
-    // });
   }
   return ApiResponse.sendError(res, message, err.status);
 
-  // res.status(err.status).json({
-  //   success: false,
-  //   status: 'error',
-  //   message: err.message,
-  // });
 };
 
 export default errorHandler;

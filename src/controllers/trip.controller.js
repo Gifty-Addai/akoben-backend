@@ -117,11 +117,10 @@ export const getTripById = async (req, res, next) => {
   }
 
   try {
-    // Retrieve the trip by ID and populate participant details for each TripDate
     const trip = await Trip.findById(id)
       .populate({
         path: 'schedule.dates.participants',
-        select: 'name email' // Select only necessary fields
+        select: 'name email' 
       })
       .exec();
 

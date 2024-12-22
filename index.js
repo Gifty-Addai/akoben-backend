@@ -17,6 +17,7 @@ import testimonyRoute from "./src/routes/testimony.route.js";
 
 // Import middleware
 import errorHandler from "./src/middlewares/exceptionHandler.middleware.js";
+import cookieParser from 'cookie-parser';
 
 // Import database connection
 import { connectDb } from "./src/lib/db.js";
@@ -34,11 +35,15 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],
     preflightContinue: false,  
+    credentials: true,
     optionsSuccessStatus: 204 
 }));
 
 // Middleware to parse JSON requests
 app.use(express.json());
+
+// Middleware to parse cookies
+app.use(cookieParser());
 
 // Define your routes
 app.use("/api/auth", authRoutes);
