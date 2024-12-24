@@ -157,6 +157,10 @@ const tripSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+tripSchema.virtual('formattedImages').get(function () {
+  return this.images.map(image => ({ url: image }));
+});
+
 const Location = mongoose.model('Location', locationSchema);
 const TripDate = mongoose.model('TripDate', tripDateSchema);
 const Trip = mongoose.model('Trip', tripSchema);
