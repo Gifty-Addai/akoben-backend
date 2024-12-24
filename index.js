@@ -12,6 +12,7 @@ import bookinRoute from "./src/routes/booking.route.js";
 import galleryRoute from "./src/routes/gallery.route.js";
 import userRoute from "./src/routes/user.route.js";
 import tripRoute from "./src/routes/trip.route.js";
+import imageRoute from "./src/routes/image.route.js";
 import videoRoute from "./src/routes/video.route.js";
 import testimonyRoute from "./src/routes/testimony.route.js";
 
@@ -53,6 +54,7 @@ app.use("/api/user", userRoute);
 app.use("/api/trip", tripRoute);
 app.use("/api/gallery", galleryRoute);
 app.use("/api/video", videoRoute);
+app.use("/api/image", imageRoute);
 app.use("/api/testimony", testimonyRoute);
 
 // Handle 404 for undefined routes
