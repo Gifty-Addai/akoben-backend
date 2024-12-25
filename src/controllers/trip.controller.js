@@ -302,26 +302,80 @@ export const updateTrip = async (req, res, next) => {
   const { id } = req.params;
   const updates = req.body;
 
+  const {
+    basicInfo,
+    typeAndDifficulty,
+    duration,
+    cost,
+    groupSize,
+    activityLevel,
+    location,
+    schedule,
+    logistics,
+    images,
+  } = updates.tripData;
+
+  const tripData = {
+    name: basicInfo?.name,
+    description: basicInfo?.description,
+    type: typeAndDifficulty?.type,
+    difficulty: typeAndDifficulty?.difficulty,
+    activityLevel: activityLevel?.activityLevel,
+    duration: {
+      days: duration?.days,
+      nights: duration?.nights,
+    },
+    groupSize: {
+      min: groupSize?.min,
+      max: groupSize?.max,
+    },
+    cost: {
+      basePrice: cost?.basePrice,
+      discount: cost?.discount,
+    },
+    location: {
+      mainLocation: location?.mainLocation,
+      pointsOfInterest: location?.pointsOfInterest?.map((poi) => poi.value),
+    },
+    schedule: {
+      dates: schedule?.dates,
+      itinerary: schedule?.itinerary,
+    },
+    logistics: {
+      transportation: logistics?.transportation,
+      gearProvided: logistics?.gearProvided,
+      accommodation: logistics?.accommodation,
+    },
+    images: images?.map((image) => image.url),
+  };
+
+  console.log("Processed trip data", tripData);
+
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return ApiResponse.sendError(res, "Invalid Id", 400)
+    return ApiResponse.sendError(res, "Invalid Id", 400);
   }
 
-  const validationErrors = validateTripUpdateData(updates);
+  const validationErrors = validateSingleTripData(tripData);
   if (validationErrors.length > 0) {
-    return ApiResponse.sendError(res, "Validation error(s)", 400)
+    return ApiResponse.sendError(
+      res,
+      validationErrors.map((err) => `${err.field}: ${err.message}`).join(", "),
+      400
+    );
   }
 
   try {
-    const trip = await Trip.findByIdAndUpdate(id, updates, { new: true });
+    const trip = await Trip.findByIdAndUpdate(id, tripData, { new: true });
     if (!trip) {
-      return ApiResponse.sendError(res, "Trip not found", 404)
+      return ApiResponse.sendError(res, "Trip not found", 404);
     }
 
-    return ApiResponse.sendSuccess(res, "Trip uppdated successfully", 200);
+    return ApiResponse.sendSuccess(res, { message: "Trip updated successfully", trip }, 200);
   } catch (error) {
     next(error);
   }
 };
+
 
 export const deleteTrip = async (req, res, next) => {
   const { id } = req.params;
