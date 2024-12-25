@@ -18,7 +18,7 @@ router.get('/getAllTrips', getAllTrips);
 router.get('/searchTrip', searchTrips);
 router.get('/getTripById/:id', getTripById);
 router.delete('/deleteTrip/:id', deleteTrip);
-router.put('/updateTrip/:id', updateTrip);
+router.patch('/updateTrip/:id', updateTrip);
 // router.post('/updateProduct/:id', updateProduct);
 
 export default router;
