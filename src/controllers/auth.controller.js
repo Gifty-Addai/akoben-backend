@@ -102,7 +102,7 @@ const initializePayment = async (req, res, next) => {
   }
 
   // Validate that amount is a number
-  // const parsedAmount = parseFloat(amount);
+  const parsedAmount = parseFloat(amount);
   // if (isNaN(parsedAmount) || parsedAmount <= 0) {
   //   return ApiResponse.sendError(res, 'Amount must be a positive number', 400);
   // }
