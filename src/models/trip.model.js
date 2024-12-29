@@ -52,7 +52,7 @@ const tripSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['hiking', 'camping', 'mountaineering', 'other'],
+    enum: ['hiking', 'camping', 'mountaineering', 'camping & hiking', 'other'],
     required: [true, 'Trip type is required.']
   },
   difficulty: {

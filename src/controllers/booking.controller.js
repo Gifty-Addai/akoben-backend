@@ -142,7 +142,7 @@ export const createBooking = async (req, res, next) => {
     });
 
     // Send confirmation email
-    // await sendMail(personalInfo.email, "Booking Pending - Fie Ne Fie", htmlBody);
+    await sendMail(personalInfo.email, "Booking Pending - Fie Ne Fie", htmlBody);
 
     // Prepare response data with payment details
     const responseBooking = {
@@ -187,12 +187,12 @@ export const getAllBookings = async (req, res, next) => {
 
     const totalBookings = await Booking.countDocuments(filters);
 
-    res.status(200).json({
+    return ApiResponse.sendSuccess(res,"",{
       bookings,
       currentPage: Number(page),
       totalPages: Math.ceil(totalBookings / limit),
       totalBookings,
-    });
+    },200)
   } catch (error) {
     next(error);
   }
@@ -206,9 +206,10 @@ export const getBookingById = async (req, res, next) => {
     const booking = await Booking.findById(id).populate('trip user');
 
     if (!booking) {
-      return res.status(404).json({ message: `Booking with id: ${id} not found` });
+      return ApiResponse.sendError(res, `Booking with id: ${id} not found`, 400);
     }
 
+    return ApiResponse.sendSuccess(res,"Success",booking,200)
     res.status(200).json(booking);
   } catch (error) {
     next(error);
