@@ -53,12 +53,14 @@ export const getAllProducts = async (req, res, next) => {
             .limit(Number(limit));
 
         const totalProducts = await Product.countDocuments();
+        const activeProducts = await Product.countDocuments({ isAvailable: true });
 
-        return ApiResponse.sendSuccess(res,"",{
+        return ApiResponse.sendSuccess(res, "", {
             products,
             currentPage: Number(page),
             totalPages: Math.ceil(totalProducts / limit),
             totalProducts,
+            activeProducts
         });
     } catch (error) {
         next(error);
@@ -73,11 +75,10 @@ export const getProductById = async (req, res, next) => {
         const product = await Product.findById(id);
 
         if (!product) {
-
-            return ApiResponse.sendError(res, `Product with id: ${id} not found`,400);
+            return ApiResponse.sendError(res, `Product with id: ${id} not found`, 400);
         }
 
-        res.status(200).json(product);
+        return ApiResponse.sendSuccess(res,"Fetched",product,200)
     } catch (error) {
         next(error);
     }
@@ -114,6 +115,9 @@ export const searchProducts = async (req, res, next) => {
             .limit(Number(limit));
 
         const totalProducts = await Product.countDocuments(filters);
+        const activeProducts = await Product.countDocuments({ isAvailable: true });
+        const inActiveProducts = await Product.countDocuments({ isAvailable: false });
+
 
         if (products.length === 0) {
             const randomProducts = await Product.aggregate([
@@ -121,21 +125,25 @@ export const searchProducts = async (req, res, next) => {
                 { $sample: { size: 100 } },
             ]);
 
-            return ApiResponse.sendSuccess(res,"",{
+            return ApiResponse.sendSuccess(res, "", {
                 products: randomProducts,
                 currentPage: Number(page),
                 totalPages: Math.ceil(totalProducts / limit),
                 totalProducts: randomProducts.length,
-                isSuggestion: true
+                isSuggestion: true,
+                activeProducts,
+                inActiveProducts
             });
         }
 
-        return ApiResponse.sendSuccess(res,"Product found",{
+        return ApiResponse.sendSuccess(res, "Product found", {
             products,
             currentPage: Number(page),
             totalPages: Math.ceil(totalProducts / limit),
             totalProducts,
-            isSuggestion: false
+            isSuggestion: false,
+            activeProducts,
+            inActiveProducts,
 
         });
     } catch (error) {
@@ -151,7 +159,7 @@ export const updateProduct = async (req, res, next) => {
     const { id } = req.params;
 
     if (!name && !description && !price && !category && !image && !isAvailable) {
-        return ApiResponse.sendError(res,"At least one field (name, description, price, category, image, isAvailable) must be provided to update" , 400);
+        return ApiResponse.sendError(res, "At least one field (name, description, price, category, image, isAvailable) must be provided to update", 400);
     }
 
     try {
@@ -159,7 +167,7 @@ export const updateProduct = async (req, res, next) => {
         const product = await Product.findById(id);
 
         if (!product) {
-            return ApiResponse.sendError(res,`Product with id: ${id} not found`,400)
+            return ApiResponse.sendError(res, `Product with id: ${id} not found`, 400)
         }
 
         // Update the product details
@@ -174,7 +182,7 @@ export const updateProduct = async (req, res, next) => {
         // Save the updated product
         await product.save();
 
-        return ApiResponse.sendSuccess(res,'Product updated successfully!',product,200)
+        return ApiResponse.sendSuccess(res, 'Product updated successfully!', product, 200)
     } catch (error) {
         next(error);
     }
@@ -190,7 +198,7 @@ export const deleteProduct = async (req, res, next) => {
         const product = await Product.findByIdAndDelete(id);
 
         if (!product) {
-            return ApiResponse.sendError(res,`Product with id: ${id} not found`,400)
+            return ApiResponse.sendError(res, `Product with id: ${id} not found`, 400)
         }
 
         return ApiResponse.sendSuccess(res, 'Product deleted successfully!');
