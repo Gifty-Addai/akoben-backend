@@ -82,18 +82,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
-  // nextRenewalDate: {
-  //   type: Date,
-  //   required: false,
-  // },
-  // latestPaymentDate: {
-  //   type: Date,
-  //   required: false,
-  // },
-  // latestPaymentAmount: {
-  //   type: Number,
-  //   required: false,
-  // },
+  nextRenewalDate: {
+    type: Date,
+    required: false,
+  },
+  latestPaymentDate: {
+    type: Date,
+    required: false,
+  },
+  latestPaymentAmount: {
+    type: Number,
+    required: false,
+  },
   // nextTrip: {
   //   type: mongoose.Schema.Types.ObjectId,
   //   ref: 'Trip',
