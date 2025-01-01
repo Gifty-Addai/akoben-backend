@@ -1,43 +1,43 @@
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { checkTempUser } from '../services/user-temp.service.js';
 import ApiResponse from '../lib/api-reponse.util.js';
-// import Joi from 'joi'; // Uncomment if using Joi for validation
 
-// Optional: Validate MongoDB ObjectId
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
-
-/* Optional: Example Joi schema for update requests
-const updateUserSchema = Joi.object({
-  name: Joi.string().optional(),
-  phone: Joi.string().optional(),
-  address: Joi.string().optional(),
-  preferences: Joi.object().optional(),
-  role: Joi.string().valid('user', 'admin').optional(),
-});
-*/
 
 // Get User Profile
 export const getUserProfile = async (req, res, next) => {
-  const { id } = req.user.id;
-  try {
-    if (!isValidObjectId(id)) {
+  const token = req.cookies["jwtRefreshToken"];
 
-      return ApiResponse.sendError(res,"Invalid user ID.",400);
+  if (!token) {
+    return ApiResponse.sendError(res, 'No session of user found', 403);
+  }
+
+  console.log("token",token)
+
+  try {
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+    const id = decoded.userId;
+
+    if (!isValidObjectId(id)) {
+      return ApiResponse.sendError(res, "Invalid user ID.", 400);
     }
 
     const user = await User.findById(id)
-      .select('-password') 
+      .select('-password')
       .populate('bookings', 'campsite campingDate');
 
     if (!user) {
-      return ApiResponse.sendError(res,"User not found.",400);
+      return ApiResponse.sendError(res, "User not found.", 404);
     }
 
-    return ApiResponse.sendSuccess(res,"",user,200)
-  
+    return ApiResponse.sendSuccess(res, "User profile fetched successfully.", user, 200);
   } catch (error) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return ApiResponse.sendError(res, "Unable to retrieve user session.", 403);
+    }
     next(error);
   }
 };
@@ -50,7 +50,7 @@ export const confirmMembership = async (req, res, next) => {
 
   // Validate required fields
   if (!name || !email || !phone) {
-    return ApiResponse.sendError(res,"Name, email, and phone are required.",400)
+    return ApiResponse.sendError(res, "Name, email, and phone are required.", 400)
   }
 
   try {
