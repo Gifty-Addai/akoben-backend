@@ -41,6 +41,7 @@ export const setRefreshTokenCookie = (res, refreshToken) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     domain: '.fienefie.com',
     path: '/'
+
   });
   console.log(`process.env.NODE_ENV : ${process.env.NODE_ENV === 'production'}`)
   console.log(`process.env.FRONTEND_URL : ${process.env.FRONTEND_URL}`)
