@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { checkTempUser } from '../services/user-temp.service.js';
 import ApiResponse from '../lib/api-reponse.util.js';
+import { sendOTP, verifyOTP } from '../services/otp.service.js';
+import { generateTokens, setRefreshTokenCookie } from '../lib/utils.js';
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -15,7 +17,7 @@ export const getUserProfile = async (req, res, next) => {
     return ApiResponse.sendError(res, 'No session of user found', 403);
   }
 
-  console.log("token",token)
+  console.log("token", token)
 
   try {
     const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
@@ -257,6 +259,48 @@ export const updateUserById = async (req, res, next) => {
       },
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+export const sendOTPEnd = async (req, res, next) => {
+  try {
+    const { number } = req.body;
+    const responseData = await sendOTP(number, 'This is OTP from Fie ne fie, %otp_code%');
+    return ApiResponse.sendSuccess(res, "OTP sent successfully", responseData);
+  } catch (error) {
+    console.error("Error in sendOtpController:", error.message);
+    next(error);
+  }
+};
+
+export const verifyOTPEnd = async (req, res, next) => {
+  try {
+    const { number, code } = req.body;
+
+    if(!number || !code ){
+      return ApiResponse.sendError(res,"number and code are required",400)
+    }
+    
+    const user = await User.findOne({ phone: number });
+    if (!user) {
+      return ApiResponse.sendError(res, 'Invalid credentials', 400);
+    }
+
+    const responseData = await verifyOTP(number, code);
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    // Set the refresh token in the cookie
+    setRefreshTokenCookie(res, refreshToken);
+
+    return ApiResponse.sendSuccess(res, "OTP verified successfully", {
+      accessToken,
+      user: { id: user._id, name: user.name, role: user.role },
+      responseData
+    });
+  } catch (error) {
+    console.error("Error in verifyOtpController:", error.message);
     next(error);
   }
 };

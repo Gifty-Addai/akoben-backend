@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import ApiResponse from '../lib/api-reponse.util.js';
 import Booking from '../models/booking.model.js';
 import verifyPayment from '../services/paymentService.js'
+import { sendOTP } from '../services/otp.service.js';
 
 
 const signup = async (req, res, next) => {
@@ -51,18 +52,18 @@ const signup = async (req, res, next) => {
  * Sign in an existing user.
  */
 const signin = async (req, res, next) => {
-  const { email, password } = req.body;
+  const { phone, password } = req.body;
 
   // Validate input fields
-  if (!email || !password) {
-    return ApiResponse.sendError(res, 'Email and password are required!', 400);
+  if (!password || !phone) {
+    return ApiResponse.sendError(res, 'Email and phone are required!', 400);
   }
 
-  const normalizedEmail = email.toLowerCase();
+  // const normalizedEmail = email.toLowerCase();
 
   try {
     // Find the user
-    const user = await User.findOne({ email: normalizedEmail });
+    const user = await User.findOne({ phone: phone });
     if (!user) {
       return ApiResponse.sendError(res, 'Invalid credentials', 400);
     }
@@ -73,16 +74,10 @@ const signin = async (req, res, next) => {
       return ApiResponse.sendError(res, 'Invalid credentials', 400);
     }
 
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user);
+    const responseData = await sendOTP(phone, 'This is OTP from Fie ne fie, %otp_code%');
 
-    // Set the refresh token in the cookie
-    setRefreshTokenCookie(res, refreshToken);
 
-    return ApiResponse.sendSuccess(res, 'Login successful', {
-      accessToken,
-      user: { id: user._id, name: user.name, role: user.role },
-    });
+    return ApiResponse.sendSuccess(res, 'OTP sent successful', responseData);
   } catch (error) {
     console.error(error);
     next(error);
