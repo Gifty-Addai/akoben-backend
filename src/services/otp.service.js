@@ -22,11 +22,7 @@ export const sendOTP = async (number, messageTemplate = 'This is your OTP, %otp_
   try {
     const response = await axios.post('https://sms.arkesel.com/api/otp/generate', data, { headers });
 
-    console.log("send opt response",response)
-    if (response.data.code !== "1000") {
-      throw new Error(response.data.message);
-    }
-    return response.data; 
+    return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || "Failed to send OTP.");
   }
@@ -50,11 +46,10 @@ export const verifyOTP = async (number, code) => {
 
   try {
     const response = await axios.post('https://sms.arkesel.com/api/otp/verify', data, { headers });
-    if (response.data.message !== "Successful") {
-      throw new Error(response.data.message);
-    }
+    
     return response.data;
   } catch (error) {
+    console.log("error", error)
     throw new Error(error.response?.data?.message || "Failed to verify OTP.");
   }
 };
