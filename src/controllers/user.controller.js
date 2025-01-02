@@ -267,6 +267,10 @@ export const sendOTPEnd = async (req, res, next) => {
   try {
     const { number } = req.body;
     const responseData = await sendOTP(number, 'This is OTP from Fie ne fie, %otp_code%');
+
+    if (responseData.code != "1000") {
+      return ApiResponse.sendError(res, responseData.message, 400);
+    }
     return ApiResponse.sendSuccess(res, "OTP sent successfully", responseData);
   } catch (error) {
     console.error("Error in sendOtpController:", error.message);
@@ -288,6 +292,10 @@ export const verifyOTPEnd = async (req, res, next) => {
     }
 
     const responseData = await verifyOTP(number, code);
+
+    if (responseData.code != "1100") {
+      return ApiResponse.sendError(res, responseData.message, 400);
+    }
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user);
 
