@@ -92,7 +92,7 @@ const logout = (req, res, next) => {
     res.clearCookie('jwtRefreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     return ApiResponse.sendSuccess(res, 'Logged out successfully');
