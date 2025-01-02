@@ -1,7 +1,7 @@
 import { parseISO, isValid, isFuture } from 'date-fns';
 import { differenceInYears } from 'date-fns';
 import jwt from 'jsonwebtoken';
-import  bcrypt  from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 
@@ -21,7 +21,7 @@ export const generateTokens = (user) => {
   const refreshToken = jwt.sign(
     { userId: user._id },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: '7d' } 
+    { expiresIn: '7d' }
   );
 
   return { accessToken, refreshToken };
@@ -38,8 +38,11 @@ export const setRefreshTokenCookie = (res, refreshToken) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000
+    // domain: process.env.FRONTEND_URL
   });
+  console.log(`process.env.NODE_ENV : ${process.env.NODE_ENV === 'production'}`)
+  console.log(`process.env.FRONTEND_URL : ${process.env.FRONTEND_URL}`)
 };
 
 
