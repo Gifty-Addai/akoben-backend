@@ -37,9 +37,10 @@ export const setRefreshTokenCookie = (res, refreshToken) => {
   res.cookie('jwtRefreshToken', refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000
-    // domain: process.env.FRONTEND_URL
+    sameSite: 'none',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    domain: '.fienefie.com',
+    path: '/'
   });
   console.log(`process.env.NODE_ENV : ${process.env.NODE_ENV === 'production'}`)
   console.log(`process.env.FRONTEND_URL : ${process.env.FRONTEND_URL}`)
