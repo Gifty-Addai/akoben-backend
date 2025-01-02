@@ -7,17 +7,17 @@ import {
     getProductById,
     searchProducts,
 } from '../controllers/product.controller.js';
-import authenticate from '../middlewares/auth.middleware.js'
 import authorize from '../middlewares/authorization.middleware.js'
+import { verifyAccessToken } from '../middlewares/verify-token.middleware.js';
 
 const router = express.Router();
 
 // Routes
-router.post('/createProduct',authenticate, authorize('admin'), createProduct);
+router.post('/createProduct',verifyAccessToken, authorize('admin'), createProduct);
 router.get('/getAllProducts', getAllProducts);
 router.get('/getProductById/:id', getProductById);
-router.delete('/deleteProduct/:id', deleteProduct);
+router.delete('/deleteProduct/:id',verifyAccessToken, authorize('admin'),  deleteProduct);
 router.post('/searchProducts', searchProducts);
-router.post('/updateProduct/:id', updateProduct);
+router.post('/updateProduct/:id',verifyAccessToken, authorize('admin'),  updateProduct);
 
 export default router;

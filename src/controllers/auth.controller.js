@@ -1,11 +1,13 @@
 import bcrypt from 'bcryptjs';
 import User from '../models/user.model.js';
-import { generateToken } from '../lib/utils.js';
+import { generateTokens, setRefreshTokenCookie } from '../lib/utils.js';
 import mongoose from 'mongoose';
 import https from 'https';
+import jwt from 'jsonwebtoken';
 import ApiResponse from '../lib/api-reponse.util.js';
 import Booking from '../models/booking.model.js';
 import verifyPayment from '../services/paymentService.js'
+import { sendOTP } from '../services/otp.service.js';
 
 
 const signup = async (req, res, next) => {
@@ -46,44 +48,102 @@ const signup = async (req, res, next) => {
   }
 };
 
+/**
+ * Sign in an existing user.
+ */
 const signin = async (req, res, next) => {
-  const { email, password } = req.body;
+  const { phone, password } = req.body;
 
-  if (!email || !password) {
-    return ApiResponse.sendError(res, 'Email and password are required!', 400);
+  // Validate input fields
+  if (!password || !phone) {
+    return ApiResponse.sendError(res, 'Email and phone are required!', 400);
   }
 
-  const normalizedEmail = email.toLowerCase();
+  // const normalizedEmail = email.toLowerCase();
 
   try {
-    const user = await User.findOne({ email: normalizedEmail });
+    // Find the user
+    const user = await User.findOne({ phone: phone });
     if (!user) {
       return ApiResponse.sendError(res, 'Invalid credentials', 400);
     }
 
+    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return ApiResponse.sendError(res, 'Invalid credentials', 400);
     }
 
-    const token = generateToken(user._id, res);
+    const responseData = await sendOTP(phone, 'This is OTP from Fie ne fie, %otp_code%');
 
-    return ApiResponse.sendSuccess(res, 'Login successful', {
-      user: { id: user._id, name: user.name, role: user.role }
-    });
+
+    return ApiResponse.sendSuccess(res, 'OTP sent successful', responseData);
   } catch (error) {
     console.error(error);
     next(error);
   }
 };
 
+/**
+ * Log out the user.
+ */
 const logout = (req, res, next) => {
   try {
-    // Here we simply send a response, as JWT logout is client-side (by deleting the token)
-    res.json({ message: 'Logged out successfully' });
+    res.clearCookie('jwtRefreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    return ApiResponse.sendSuccess(res, 'Logged out successfully');
   } catch (error) {
     console.error(error);
     next(error);
+  }
+};
+
+/**
+ * Refresh the Access Token using the Refresh Token.
+ * This endpoint can be called by the frontend when the access token expires.
+ */
+const refreshAccessToken = async (req, res, next) => {
+  try {
+    const refreshToken = req.cookies.jwtRefreshToken;
+    if (!refreshToken) {
+      return ApiResponse.sendError(res, 'Unable to get user session', 403);
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return ApiResponse.sendError(res, 'User not found', 403);
+    }
+
+    const accessToken = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    // Optionally, generate a new refresh token as well to rotate them
+    // const newRefreshToken = jwt.sign(
+    //   { userId: user._id },
+    //   process.env.REFRESH_TOKEN_SECRET,
+    //   { expiresIn: '7d' }
+    // );
+    // setRefreshTokenCookie(res, newRefreshToken);
+    // user.refreshToken = newRefreshToken;
+    // await user.save();
+
+    // Send the new tokens
+    return ApiResponse.sendSuccess(res, 'Token refreshed', { accessToken });
+  } catch (error) {
+    console.error(error);
+    if (error.name === 'TokenExpiredError') {
+      return ApiResponse.sendError(res, 'User session expired', 403);
+    }
+    return ApiResponse.sendError(res, 'User data invalid', 403);
   }
 };
 
@@ -97,7 +157,7 @@ const initializePayment = async (req, res, next) => {
     return ApiResponse.sendError(res, 'Amount, email, and phone are required!', 400);
   }
 
-  if (isBooking === true && !bookingId) { // Use strict comparison and corrected message
+  if (isBooking === true && !bookingId) {
     return ApiResponse.sendError(res, 'Booking ID is required when isBooking is true', 400);
   }
 
@@ -107,11 +167,10 @@ const initializePayment = async (req, res, next) => {
     return ApiResponse.sendError(res, 'Amount must be a positive number', 400);
   }
 
-  // Function to initialize payment with Paystack
   const paystackInitialize = (paymentAmount, customerEmail) => {
     const params = JSON.stringify({
       email: customerEmail,
-      amount: paymentAmount * 100, // Convert to kobo if currency is NGN
+      amount: paymentAmount * 100,
     });
 
     const options = {
@@ -164,7 +223,6 @@ const initializePayment = async (req, res, next) => {
         return ApiResponse.sendError(res, 'Invalid booking ID format', 400);
       }
 
-      // Retrieve the Booking document
       const existingBooking = await Booking.findById(bookingId).exec();
 
       if (!existingBooking) {
@@ -177,7 +235,6 @@ const initializePayment = async (req, res, next) => {
       }
     }
 
-    // Calculate total amount with additional fee (e.g., 35 units)
     const totalAmount = parsedAmount + 35;
 
     // Initialize payment with Paystack
@@ -195,14 +252,13 @@ const initializePayment = async (req, res, next) => {
         );
 
         if (!updatedBooking) {
-          // This should not happen as we've already checked existence
           return ApiResponse.sendError(res, 'Booking not found or failed to update', 404);
         }
       }
 
       // Respond with payment initialization details
       return ApiResponse.sendSuccess(res, "Payment URL created successfully", {
-        amount: totalAmount * 100, // Assuming Paystack expects the amount in kobo
+        amount: totalAmount * 100,
         authorizationUrl: authorization_url,
         reference: reference,
         access_code: { accessCode: access_code },
@@ -308,4 +364,4 @@ const verifyBookingPayment = async (req, res, next) => {
   }
 };
 
-export { signin, signup, logout, initializePayment, verifyBookingPayment, genVerifyPayment };
+export { signin, signup, logout, refreshAccessToken, initializePayment, verifyBookingPayment, genVerifyPayment };

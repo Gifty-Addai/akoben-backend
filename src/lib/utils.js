@@ -5,22 +5,43 @@ import  bcrypt  from 'bcryptjs';
 import crypto from 'crypto';
 
 
-export const generateToken = (userId, res) => {
-  const token = jwt.sign(
-    { userId: userId },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
+/**
+ * Generate both Access and Refresh tokens for a user.
+ * 
+ * @param {Object} user - The user document (or at least userId).
+ * @returns {Object} An object containing { accessToken, refreshToken }
+ */
+export const generateTokens = (user) => {
+  const accessToken = jwt.sign(
+    { userId: user._id, role: user.role },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: '15m' }
   );
 
-  res.cookie('jwt', token, {
+  const refreshToken = jwt.sign(
+    { userId: user._id },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: '7d' } 
+  );
+
+  return { accessToken, refreshToken };
+};
+
+/**
+ * Set a refresh token in a secure HTTP-only cookie.
+ * 
+ * @param {Object} res - Express response object
+ * @param {string} refreshToken - JWT refresh token
+ */
+export const setRefreshTokenCookie = (res, refreshToken) => {
+  res.cookie('jwtRefreshToken', refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
-
-  return token;
 };
+
 
 
 export const toProperCase = (str) => {
