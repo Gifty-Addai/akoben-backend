@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter: function (req, file, cb) {
     const filetypes = /jpeg|jpg|png|gif/;
     const mimetype = filetypes.test(file.mimetype.toLowerCase());
@@ -40,7 +40,7 @@ const upload = multer({
 export const uploadImage = async (req, res, next) => {
   try {
     if (!req.file) {
-        return ApiResponse.sendError(res,"No file uploaded",400);
+      return ApiResponse.sendError(res, "No file uploaded", 400);
     }
 
     const result = await cloudinary.uploader.upload(req.file.path, {
@@ -55,7 +55,7 @@ export const uploadImage = async (req, res, next) => {
     });
 
     // Respond with the Cloudinary image URL
-    return ApiResponse.sendSuccess(res,"",{ url: result.secure_url },200)
+    return ApiResponse.sendSuccess(res, "", { url: result.secure_url }, 200)
   } catch (error) {
     console.error('Upload Error:', error);
     next(error);
