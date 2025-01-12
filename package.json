@@ -37,5 +37,9 @@
     "nodemon": "^3.1.0",
     "paystack": "^2.0.1",
     "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
   }
 }
