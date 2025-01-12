@@ -153,7 +153,7 @@ const tripSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['open', 'closed', 'completed', 'cancelled'],
-    default: 'open'
+    default: 'closed'
   },
 }, { timestamps: true });
 

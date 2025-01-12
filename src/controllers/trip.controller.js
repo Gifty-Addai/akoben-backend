@@ -181,12 +181,13 @@ export const getTripById = async (req, res, next) => {
 };
 
 export const getAllTrips = async (req, res, next) => {
-  const { page = 1, limit = 10, type, difficulty } = req.query;
+  const { page = 1, limit = 10, type, difficulty, status } = req.query;
 
   try {
     const filters = {};
     if (type) filters.type = type;
     if (difficulty) filters.difficulty = difficulty;
+    if (status && status == "open") filters.status = status;
 
     const skip = (page - 1) * limit;
     const trips = await Trip.find(filters).skip(skip).limit(Number(limit));
@@ -295,7 +296,6 @@ export const searchTrips = async (req, res, next) => {
     next(error);
   }
 };
-
 
 
 export const updateTrip = async (req, res, next) => {
