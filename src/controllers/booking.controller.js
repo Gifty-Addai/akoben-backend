@@ -58,7 +58,6 @@ export const createBooking = async (req, res, next) => {
     // Combine first and last name
     const fullName = `${firstName} ${lastName}`;
 
-    // Check if user exists or create a new temporary user
     const user = await checkTempUser(
       fullName,
       phone,
@@ -70,7 +69,7 @@ export const createBooking = async (req, res, next) => {
       city,
       zipCode,
       idCard,
-      session // Ensure that user creation is within the same session
+      session 
     );
 
     if (!user) {
@@ -105,8 +104,9 @@ export const createBooking = async (req, res, next) => {
       // Optionally, you can populate additional fields if needed
       // await existingBooking.populate('trip').execPopulate();
 
-      // Return 200 response with existing booking details
-      return ApiResponse.sendSuccess(res, "User is already a participant with an existing booking.", responseData, 200);
+      await session.abortTransaction();
+      session.endSession();
+      return ApiResponse.sendError(res, "User is already a participant with an existing booking.", responseData, 400);
     }
 
     // If user is not already a participant, proceed to create a new booking

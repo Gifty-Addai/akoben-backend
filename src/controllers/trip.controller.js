@@ -315,67 +315,131 @@ export const updateTrip = async (req, res, next) => {
     images,
   } = updates.tripData;
 
-  const tripData = {
-    name: basicInfo?.name,
-    description: basicInfo?.description,
-    type: typeAndDifficulty?.type,
-    difficulty: typeAndDifficulty?.difficulty,
-    activityLevel: activityLevel?.activityLevel,
-    duration: {
-      days: duration?.days,
-      nights: duration?.nights,
-    },
-    groupSize: {
-      min: groupSize?.min,
-      max: groupSize?.max,
-    },
-    cost: {
-      basePrice: cost?.basePrice,
-      discount: cost?.discount,
-    },
-    location: {
-      mainLocation: location?.mainLocation,
-      pointsOfInterest: location?.pointsOfInterest?.map((poi) => poi.value),
-    },
-    schedule: {
-      dates: schedule?.dates,
-      itinerary: schedule?.itinerary,
-    },
-    logistics: {
-      transportation: logistics?.transportation,
-      gearProvided: logistics?.gearProvided,
-      accommodation: logistics?.accommodation,
-    },
-    images: images?.map((image) => image.url),
-  };
+  // Initialize an empty object to hold update operations
+  const updateOperations = {};
 
-  console.log("Processed trip data", tripData);
+  // Process basicInfo
+  if (basicInfo) {
+    if (basicInfo.name !== undefined) updateOperations.name = basicInfo.name;
+    if (basicInfo.description !== undefined) updateOperations.description = basicInfo.description;
+  }
+
+  // Process typeAndDifficulty
+  if (typeAndDifficulty) {
+    if (typeAndDifficulty.type !== undefined) updateOperations.type = typeAndDifficulty.type;
+    if (typeAndDifficulty.difficulty !== undefined) updateOperations.difficulty = typeAndDifficulty.difficulty;
+  }
+
+  // Process activityLevel
+  if (activityLevel && activityLevel.activityLevel !== undefined) {
+    updateOperations.activityLevel = activityLevel.activityLevel;
+  }
+
+  // Process duration
+  if (duration) {
+    if (duration.days !== undefined) updateOperations['duration.days'] = duration.days;
+    if (duration.nights !== undefined) updateOperations['duration.nights'] = duration.nights;
+  }
+
+  // Process groupSize
+  if (groupSize) {
+    if (groupSize.min !== undefined) updateOperations['groupSize.min'] = groupSize.min;
+    if (groupSize.max !== undefined) updateOperations['groupSize.max'] = groupSize.max;
+  }
+
+  // Process cost
+  if (cost) {
+    if (cost.basePrice !== undefined) updateOperations['cost.basePrice'] = cost.basePrice;
+    if (cost.discount !== undefined) updateOperations['cost.discount'] = cost.discount;
+  }
+
+  // Process location
+  if (location) {
+    if (location.mainLocation !== undefined) updateOperations['location.mainLocation'] = location.mainLocation;
+    if (location.pointsOfInterest !== undefined) {
+      updateOperations['location.pointsOfInterest'] = location.pointsOfInterest.map(poi => poi.value);
+    }
+  }
+
+  // Process logistics
+  if (logistics) {
+    if (logistics.transportation !== undefined) updateOperations['logistics.transportation'] = logistics.transportation;
+    if (logistics.gearProvided !== undefined) updateOperations['logistics.gearProvided'] = logistics.gearProvided;
+    if (logistics.accommodation !== undefined) updateOperations['logistics.accommodation'] = logistics.accommodation;
+  }
+
+  // Process images
+  if (images) {
+    updateOperations.images = images.map(image => image.url);
+  }
+
+  // Process schedule
+  if (schedule && schedule.dates) {
+    // Iterate over each date to update
+    schedule.dates.forEach((date, index) => {
+      if (!date._id) {
+        // Handle the case where _id is not provided
+        // You may choose to skip or throw an error
+        // Here, we'll skip updating this date
+        return;
+      }
+
+      console.log("Processing date:", date);
+      // Dynamically build the update operations for each date field
+      Object.keys(date).forEach(field => {
+        if (field === '_id') return;
+
+        // Use the arrayFilters to target specific elements in the dates array
+        // We'll accumulate the fields to set for each date
+        // Example: 'schedule.dates.$[elem].startDate' = new value
+        updateOperations[`schedule.dates.$[elem${index}].${field}`] = date[field];
+      });
+    });
+  }
+
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return ApiResponse.sendError(res, "Invalid Id", 400);
   }
 
-  const validationErrors = validateSingleTripData(tripData);
+  // Validate the update data
+  const validationErrors = validateSingleTripData(updateOperations, true); 
   if (validationErrors.length > 0) {
     return ApiResponse.sendError(
       res,
-      validationErrors.map((err) => `${err.field}: ${err.message}`).join(", "),
+      validationErrors.map(err => `${err.field}: ${err.message}`).join(", "),
       400
     );
   }
 
   try {
-    const trip = await Trip.findByIdAndUpdate(id, tripData, { new: true });
+    // Build arrayFilters if schedule.dates is being updated
+    let arrayFilters = [];
+    if (schedule && schedule.dates) {
+      schedule.dates.forEach((date, index) => {
+        if (date._id) {
+          arrayFilters.push({ [`elem${index}._id`]: new mongoose.Types.ObjectId(date._id) });
+        }
+      });
+    }
+
+    const options = { new: true };
+    if (arrayFilters.length > 0) {
+      options.arrayFilters = arrayFilters;
+    }
+
+    const trip = await Trip.findByIdAndUpdate(id, updateOperations, options);
+
     if (!trip) {
       return ApiResponse.sendError(res, "Trip not found", 404);
     }
 
-    return ApiResponse.sendSuccess(res, { message: "Trip updated successfully", trip }, 200);
+    return ApiResponse.sendSuccess(res, "Trip updated successfully", trip, 200);
   } catch (error) {
+    console.error("Error updating trip:", error);
     next(error);
   }
 };
-
 
 export const deleteTrip = async (req, res, next) => {
   const { id } = req.params;

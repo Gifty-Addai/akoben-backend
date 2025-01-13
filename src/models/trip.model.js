@@ -120,7 +120,6 @@ const tripSchema = new mongoose.Schema({
       activities: {
         type: String,
         required: [true, 'Activities for the day are required.'],
-        maxlength: [500, 'Activities description cannot exceed 500 characters.']
       },
     }],
   },
@@ -128,7 +127,6 @@ const tripSchema = new mongoose.Schema({
     transportation: {
       type: String,
       trim: true,
-      maxlength: [100, 'Transportation description cannot exceed 100 characters.']
     },
     gearProvided: {
       type: Boolean,
@@ -137,7 +135,6 @@ const tripSchema = new mongoose.Schema({
     accommodation: {
       type: String,
       trim: true,
-      maxlength: [100, 'Accommodation description cannot exceed 100 characters.']
     },
   },
   images: [{
