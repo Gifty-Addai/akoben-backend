@@ -60,6 +60,18 @@ app.use(express.json());
 // Middleware to parse cookies
 app.use(cookieParser());
 
+// Global Serverless DB Connection Middleware
+app.use(async (req, res, next) => {
+  try {
+    const { connectDbServerless } = await import('./src/lib/db-serverless.js');
+    await connectDbServerless();
+    next();
+  } catch (error) {
+    console.error('Database connection failed in global middleware:', error);
+    next(error);
+  }
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/product", productRouter);
 app.use("/api/booking", bookinRoute);

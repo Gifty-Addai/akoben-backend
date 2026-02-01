@@ -71,19 +71,16 @@ export const getTallowProducts = async (req, res, next) => {
     const { page = 1, limit = 10 } = req.query;
 
     try {
-        // Import at runtime to avoid circular dependencies
-        const { connectDbServerless } = await import('../lib/db-serverless.js');
-        await connectDbServerless();
+
 
         const skip = (page - 1) * limit;
 
-        // Filter for only tallow category products
-        const products = await Product.find({ category: 'tallow' })
-            .skip(skip)
-            .limit(Number(limit));
-
-        const totalTallowProducts = await Product.countDocuments({ category: 'tallow' });
-        const activeTallowProducts = await Product.countDocuments({ category: 'tallow', isAvailable: true });
+        // Run queries in parallel to reduce latency
+        const [products, totalTallowProducts, activeTallowProducts] = await Promise.all([
+            Product.find({ category: 'tallow' }).skip(skip).limit(Number(limit)),
+            Product.countDocuments({ category: 'tallow' }),
+            Product.countDocuments({ category: 'tallow', isAvailable: true })
+        ]);
 
         return ApiResponse.sendSuccess(res, "", {
             products,
