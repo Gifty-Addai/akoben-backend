@@ -42,6 +42,10 @@ const productSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Add indexes for faster queries
+productSchema.index({ category: 1 });
+productSchema.index({ category: 1, isAvailable: 1 });
+
 const Product = mongoose.model('Product', productSchema);
 
 export default Product;

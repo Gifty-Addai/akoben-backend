@@ -71,6 +71,10 @@ export const getTallowProducts = async (req, res, next) => {
     const { page = 1, limit = 10 } = req.query;
 
     try {
+        // Import at runtime to avoid circular dependencies
+        const { connectDbServerless } = await import('../lib/db-serverless.js');
+        await connectDbServerless();
+
         const skip = (page - 1) * limit;
 
         // Filter for only tallow category products

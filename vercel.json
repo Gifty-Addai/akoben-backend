@@ -1,17 +1,25 @@
 {
-    "version": 2,
-    "name": "akese-akoben",
-    "builds": [
-      {
-        "src": "index.js",
-        "use": "@vercel/node"
-      }
-    ],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "index.js"
-      }
-    ]
+  "version": 2,
+  "name": "akese-akoben",
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "index.js"
+    }
+  ],
+  "functions": {
+    "index.js": {
+      "maxDuration": 10,
+      "memory": 1024
+    }
+  },
+  "env": {
+    "MONGODB_URI": "@mongodb_uri"
   }
-  
+}
