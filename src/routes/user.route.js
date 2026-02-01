@@ -22,6 +22,8 @@ router.post('/verify-email', verifyEmail);
 router.post('/reset-password', resetPassword);
 
 // Authenticated User Routes
+router.use(authenticate); // Apply authentication to all routes below
+
 router.get('/getUserProfile', getUserProfile);
 router.put('/profile', updateUserProfile);
 router.post('/confirmMembership', confirmMembership);

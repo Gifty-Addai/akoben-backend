@@ -1,16 +1,26 @@
 import axios from 'axios';
 
 export const sendOTP = async (number, messageTemplate = 'This is your OTP, %otp_code%') => {
-  if (!/^\d{12}$/.test(number)) {
-    throw new Error("Invalid phone number format.");
+  // Normalize: Remove invalid chars
+  let formattedNumber = number.toString().replace(/\D/g, '');
+
+  // Handle local Ghana numbers (024... -> 23324...)
+  if (formattedNumber.length === 10 && formattedNumber.startsWith('0')) {
+    formattedNumber = '233' + formattedNumber.substring(1);
   }
 
+  if (!/^\d{12}$/.test(formattedNumber)) {
+    console.error(`Invalid phone format received: ${number} -> ${formattedNumber}`);
+    throw new Error("Invalid phone number format. Must be 12 digits (e.g. 233...)");
+  }
+
+  // Use the formatted number for the request
   const data = {
     expiry: 5,
     length: 6,
     medium: 'sms',
     message: messageTemplate,
-    number,
+    number: formattedNumber,
     sender_id: 'Fie ne Fie',
     type: 'numeric',
   };
@@ -30,14 +40,22 @@ export const sendOTP = async (number, messageTemplate = 'This is your OTP, %otp_
 
 export const verifyOTP = async (number, code) => {
 
-  if (!/^\d{12}$/.test(number)) {
+  // Normalize: Remove invalid chars
+  let formattedNumber = number.toString().replace(/\D/g, '');
+
+  // Handle local Ghana numbers (024... -> 23324...)
+  if (formattedNumber.length === 10 && formattedNumber.startsWith('0')) {
+    formattedNumber = '233' + formattedNumber.substring(1);
+  }
+
+  if (!/^\d{12}$/.test(formattedNumber)) {
     throw new Error("Invalid phone number format.");
   }
 
   const data = {
     api_key: process.env.ARKESEL_KEY,
     code,
-    number,
+    number: formattedNumber,
   };
 
   const headers = {
@@ -46,7 +64,7 @@ export const verifyOTP = async (number, code) => {
 
   try {
     const response = await axios.post('https://sms.arkesel.com/api/otp/verify', data, { headers });
-    
+
     return response.data;
   } catch (error) {
     console.log("error", error)
