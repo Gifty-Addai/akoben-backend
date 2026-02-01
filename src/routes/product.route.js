@@ -22,6 +22,6 @@ router.get('/getProductById/:id', getProductById);
 router.delete('/deleteProduct/:id', verifyAccessToken, authorize('admin'), deleteProduct);
 router.post('/searchProducts', searchProducts);
 router.post('/updateProduct/:id', verifyAccessToken, authorize('admin'), updateProduct);
-router.put('/click/:id', trackProductClick);
+router.post('/click/:id', trackProductClick);
 
 export default router;

@@ -249,6 +249,7 @@ export const trackProductClick = async (req, res, next) => {
     const { id } = req.params;
     try {
         await Product.findByIdAndUpdate(id, { $inc: { clickCount: 1 } });
+        console.log(`Click tracked for product ${id}`); // Log for visibility
         return ApiResponse.sendSuccess(res, "Click tracked");
     } catch (error) {
         next(error);
