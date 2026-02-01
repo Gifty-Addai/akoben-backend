@@ -67,6 +67,33 @@ export const getAllProducts = async (req, res, next) => {
     }
 };
 
+export const getTallowProducts = async (req, res, next) => {
+    const { page = 1, limit = 10 } = req.query;
+
+    try {
+        const skip = (page - 1) * limit;
+
+        // Filter for only tallow category products
+        const products = await Product.find({ category: 'tallow' })
+            .skip(skip)
+            .limit(Number(limit));
+
+        const totalTallowProducts = await Product.countDocuments({ category: 'tallow' });
+        const activeTallowProducts = await Product.countDocuments({ category: 'tallow', isAvailable: true });
+
+        return ApiResponse.sendSuccess(res, "", {
+            products,
+            currentPage: Number(page),
+            totalPages: Math.ceil(totalTallowProducts / limit),
+            totalProducts: totalTallowProducts,
+            activeProducts: activeTallowProducts
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 
 export const getProductById = async (req, res, next) => {
     const { id } = req.params;
@@ -78,7 +105,7 @@ export const getProductById = async (req, res, next) => {
             return ApiResponse.sendError(res, `Product with id: ${id} not found`, 400);
         }
 
-        return ApiResponse.sendSuccess(res,"Fetched",product,200)
+        return ApiResponse.sendSuccess(res, "Fetched", product, 200)
     } catch (error) {
         next(error);
     }

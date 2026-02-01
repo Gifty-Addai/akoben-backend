@@ -4,6 +4,7 @@ import {
     updateProduct,
     deleteProduct,
     getAllProducts,
+    getTallowProducts,
     getProductById,
     searchProducts,
 } from '../controllers/product.controller.js';
@@ -13,11 +14,12 @@ import { verifyAccessToken } from '../middlewares/verify-token.middleware.js';
 const router = express.Router();
 
 // Routes
-router.post('/createProduct',verifyAccessToken, authorize('admin'), createProduct);
+router.post('/createProduct', verifyAccessToken, authorize('admin'), createProduct);
 router.get('/getAllProducts', getAllProducts);
+router.get('/getTallowProducts', getTallowProducts);
 router.get('/getProductById/:id', getProductById);
-router.delete('/deleteProduct/:id',verifyAccessToken, authorize('admin'),  deleteProduct);
+router.delete('/deleteProduct/:id', verifyAccessToken, authorize('admin'), deleteProduct);
 router.post('/searchProducts', searchProducts);
-router.post('/updateProduct/:id',verifyAccessToken, authorize('admin'),  updateProduct);
+router.post('/updateProduct/:id', verifyAccessToken, authorize('admin'), updateProduct);
 
 export default router;
