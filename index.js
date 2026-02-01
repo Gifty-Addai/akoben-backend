@@ -14,6 +14,7 @@ import mailRoute from "./src/routes/mailing.route.js";
 import imageRoute from "./src/routes/image.route.js";
 import videoRoute from "./src/routes/video.route.js";
 import testimonyRoute from "./src/routes/testimony.route.js";
+import orderRoutes from "./src/routes/order.route.js";
 
 import errorHandler from "./src/middlewares/exceptionHandler.middleware.js";
 import cookieParser from 'cookie-parser';
@@ -82,6 +83,7 @@ app.use("/api/gallery", galleryRoute);
 app.use("/api/video", videoRoute);
 app.use("/api/image", imageRoute);
 app.use("/api/testimony", testimonyRoute);
+app.use("/api/orders", orderRoutes);
 
 app.use((req, res, next) => {
   ApiResponse.sendError(res, "Endpoint not found", 404);
