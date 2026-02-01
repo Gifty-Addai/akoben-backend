@@ -77,17 +77,20 @@ export const getTallowProducts = async (req, res, next) => {
 
         // Run queries in parallel to reduce latency
         const [products, totalTallowProducts, activeTallowProducts] = await Promise.all([
-            Product.find({ category: 'tallow' }).skip(skip).limit(Number(limit)),
+            Product.find({ category: 'tallow' }).select('-clickCount').skip(skip).limit(Number(limit)),
             Product.countDocuments({ category: 'tallow' }),
             Product.countDocuments({ category: 'tallow', isAvailable: true })
         ]);
+
+        const inActiveTallowProducts = totalTallowProducts - activeTallowProducts;
 
         return ApiResponse.sendSuccess(res, "", {
             products,
             currentPage: Number(page),
             totalPages: Math.ceil(totalTallowProducts / limit),
             totalProducts: totalTallowProducts,
-            activeProducts: activeTallowProducts
+            activeProducts: activeTallowProducts,
+            inActiveProducts: inActiveTallowProducts
         });
     } catch (error) {
         next(error);
@@ -100,7 +103,7 @@ export const getProductById = async (req, res, next) => {
     const { id } = req.params;
 
     try {
-        const product = await Product.findById(id);
+        const product = await Product.findById(id).select('-clickCount');
 
         if (!product) {
             return ApiResponse.sendError(res, `Product with id: ${id} not found`, 400);
@@ -148,8 +151,15 @@ export const searchProducts = async (req, res, next) => {
 
 
         if (products.length === 0) {
+            const matchStage = { isAvailable: true };
+
+            // If category was specified in the original search, respect it in suggestions
+            if (category) {
+                matchStage.category = { $regex: new RegExp(category, 'i') };
+            }
+
             const randomProducts = await Product.aggregate([
-                { $match: { isAvailable: true } },
+                { $match: matchStage },
                 { $sample: { size: 100 } },
             ]);
 
@@ -230,6 +240,16 @@ export const deleteProduct = async (req, res, next) => {
         }
 
         return ApiResponse.sendSuccess(res, 'Product deleted successfully!');
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const trackProductClick = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        await Product.findByIdAndUpdate(id, { $inc: { clickCount: 1 } });
+        return ApiResponse.sendSuccess(res, "Click tracked");
     } catch (error) {
         next(error);
     }

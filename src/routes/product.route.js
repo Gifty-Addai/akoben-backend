@@ -7,6 +7,7 @@ import {
     getTallowProducts,
     getProductById,
     searchProducts,
+    trackProductClick,
 } from '../controllers/product.controller.js';
 import authorize from '../middlewares/authorization.middleware.js'
 import { verifyAccessToken } from '../middlewares/verify-token.middleware.js';
@@ -21,5 +22,6 @@ router.get('/getProductById/:id', getProductById);
 router.delete('/deleteProduct/:id', verifyAccessToken, authorize('admin'), deleteProduct);
 router.post('/searchProducts', searchProducts);
 router.post('/updateProduct/:id', verifyAccessToken, authorize('admin'), updateProduct);
+router.put('/click/:id', trackProductClick);
 
 export default router;

@@ -28,6 +28,14 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  clickCount: {
+    type: Number,
+    default: 0,
+  },
+  clickCount: {
+    type: Number,
+    default: 0,
+  },
   isAvailable: {
     type: Boolean,
     default: true,
