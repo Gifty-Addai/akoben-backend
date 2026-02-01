@@ -14,7 +14,7 @@
     }
   ],
   "functions": {
-    "index.js": {
+    "src/routes/**/*.js": {
       "maxDuration": 10,
       "memory": 1024
     }
