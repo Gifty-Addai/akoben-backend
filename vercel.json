@@ -13,12 +13,7 @@
       "dest": "index.js"
     }
   ],
-  "functions": {
-    "src/routes/**/*.js": {
-      "maxDuration": 10,
-      "memory": 1024
-    }
-  },
+
   "env": {
     "MONGODB_URI": "@mongodb_uri",
     "PRODUCTION_FRONTEND_URL": "@production_frontend_url"
