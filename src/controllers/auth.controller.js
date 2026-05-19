@@ -12,7 +12,7 @@ import { sendOTP } from '../services/otp.service.js';
 
 const signup = async (req, res, next) => {
   console.log('Request Body:', req.body);
-  const { name, email, password, phone } = req.body;
+  const { name, email, password, phone, role } = req.body;
 
   // Validate input fields
   if (!email || !password || !name || !phone) {
@@ -35,13 +35,14 @@ const signup = async (req, res, next) => {
       email: normalizedEmail,
       password: hashedPassword,
       phone,
+      role: role || "user",
     });
 
     await newUser.save();
 
     // TODO: Implement email verification
 
-    return ApiResponse.sendSuccess(res, 'User registered successfully!', 201);
+    return ApiResponse.sendSuccess(res, 'User registered successfully!', newUser, 201);
   } catch (error) {
     console.error(error);
     next(error);

@@ -150,22 +150,16 @@ export const deleteUser = async (req, res, next) => {
 
   try {
     if (!isValidObjectId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID.",
-      });
+      return ApiResponse.sendError(res, "Invalid user ID.", 400);
     }
 
     const user = await User.findByIdAndDelete(id);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return ApiResponse.sendError(res, "User not found.", 404);
     }
 
-    res.status(200).json({
-      success: true,
-      message: "User deleted successfully.",
-    });
+    return ApiResponse.sendSuccess(res, "User deleted successfully.", null, 200);
   } catch (error) {
     next(error);
   }
@@ -176,12 +170,7 @@ export const getAllUsers = async (req, res, next) => {
   try {
     // Optionally implement pagination and filtering
     const users = await User.find().select('-password');
-    res.status(200).json({
-      success: true,
-      message: "All users retrieved successfully.",
-      count: users.length,
-      users,
-    });
+    return ApiResponse.sendSuccess(res, "All users retrieved successfully.", users, 200);
   } catch (error) {
     next(error);
   }
@@ -222,22 +211,13 @@ export const updateUserById = async (req, res, next) => {
 
   try {
     if (!isValidObjectId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID.",
-      });
+      return ApiResponse.sendError(res, "Invalid user ID.", 400);
     }
-
-    // Optional: Validate body with Joi
-    // const { error } = updateUserSchema.validate(req.body);
-    // if (error) {
-    //   return res.status(400).json({ success: false, message: error.message });
-    // }
 
     const user = await User.findById(id);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return ApiResponse.sendError(res, "User not found.", 404);
     }
 
     if (name) user.name = name;
@@ -247,17 +227,16 @@ export const updateUserById = async (req, res, next) => {
 
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "User updated successfully.",
-      user: {
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        address: user.address,
-        role: user.role,
-      },
-    });
+    const updatedUser = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      role: user.role,
+    };
+
+    return ApiResponse.sendSuccess(res, "User updated successfully.", updatedUser, 200);
   } catch (error) {
     next(error);
   }

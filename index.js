@@ -29,14 +29,19 @@ const app = express();
 const port = process.env.PORT || 3000;
 const __dirname = path.resolve();
 
-// Middleware to handle CORS
+const parseOrigins = (originsString) => {
+  if (!originsString) return [];
+  return originsString.split(',').map(origin => origin.trim());
+};
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5175',
   'http://localhost:5174',
   'http://localhost:3000',
-  process.env.FRONTEND_URL,
-  process.env.PRODUCTION_FRONTEND_URL
+  ...parseOrigins(process.env.FRONTEND_URL),
+  ...parseOrigins(process.env.PRODUCTION_FRONTEND_URL),
+  ...parseOrigins(process.env.ALLOWED_ORIGINS)
 ].filter(Boolean);
 
 app.use(cors({
