@@ -4,7 +4,14 @@ const orderSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: false
+    },
+    orderId: {
+        type: String,
+        unique: true,
+        default: function () {
+            return `AT-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+        }
     },
     products: [{
         product: {
@@ -42,10 +49,14 @@ const orderSchema = new mongoose.Schema({
         required: true
     },
     shippingAddress: {
+        firstName: { type: String },
+        lastName: { type: String },
+        phone: { type: String },
         street: { type: String },
         city: { type: String },
         zipCode: { type: String },
-        country: { type: String, default: 'Ghana' }
+        country: { type: String, default: 'Ghana' },
+        landmark: { type: String }
     },
     pickupLocation: {
         type: String,

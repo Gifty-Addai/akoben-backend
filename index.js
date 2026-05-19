@@ -15,6 +15,7 @@ import imageRoute from "./src/routes/image.route.js";
 import videoRoute from "./src/routes/video.route.js";
 import testimonyRoute from "./src/routes/testimony.route.js";
 import orderRoutes from "./src/routes/order.route.js";
+import adminRoute from './src/routes/admin.route.js';
 
 import errorHandler from "./src/middlewares/exceptionHandler.middleware.js";
 import cookieParser from 'cookie-parser';
@@ -31,6 +32,8 @@ const __dirname = path.resolve();
 // Middleware to handle CORS
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:5175',
+  'http://localhost:5174',
   'http://localhost:3000',
   process.env.FRONTEND_URL,
   process.env.PRODUCTION_FRONTEND_URL
@@ -77,6 +80,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/product", productRouter);
 app.use("/api/booking", bookinRoute);
 app.use("/api/user", userRoute);
+app.use("/api/admin", adminRoute);
 app.use("/api/mail", mailRoute);
 app.use("/api/trip", tripRoute);
 app.use("/api/gallery", galleryRoute);

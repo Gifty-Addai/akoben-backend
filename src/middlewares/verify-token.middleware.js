@@ -15,7 +15,7 @@ export const verifyAccessToken = (req, res, next) => {
         if (process.env.NODE_ENV === 'development') {
             console.warn("⚠️ AUTHENTICATION DISABLED IN DEVELOPMENT: Mocking Admin User ⚠️");
             req.user = {
-                id: 'dev-admin-id',
+                id: '507f1f77bcf86cd799439011', // Valid generic ObjectId
                 role: 'admin', // Mocking admin role
                 email: 'admin@example.com'
             };

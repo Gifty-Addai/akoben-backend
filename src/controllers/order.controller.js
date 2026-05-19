@@ -9,7 +9,7 @@ const FREE_SHIPPING_THRESHOLD = 100;
 export const createOrder = async (req, res, next) => {
     try {
         const { products, deliveryMethod, shippingAddress, pickupLocation, paymentMethod } = req.body;
-        const userId = req.user._id;
+        const userId = req.user.userId || req.user.id || req.user._id;
 
         if (!products || products.length === 0) {
             return ApiResponse.sendError(res, "Order must contain at least one product", 400);
@@ -71,7 +71,7 @@ export const createOrder = async (req, res, next) => {
 
 export const getUserOrders = async (req, res, next) => {
     try {
-        const userId = req.user._id;
+        const userId = req.user.userId || req.user.id || req.user._id;
         const orders = await Order.find({ user: userId })
             .populate('products.product', 'name imageUrl price')
             .sort({ createdAt: -1 });
@@ -106,6 +106,21 @@ export const getAllOrders = async (req, res, next) => {
             page: Number(page),
             pages: Math.ceil(total / limit)
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getOrderById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findById(id)
+            .populate('user', 'name email phone')
+            .populate('products.product', 'name imageUrl price');
+
+        if (!order) return ApiResponse.sendError(res, "Order not found", 404);
+
+        return ApiResponse.sendSuccess(res, "Order details fetched", order);
     } catch (error) {
         next(error);
     }
