@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "akese-akoben",
   "builds": [
     {
       "src": "index.js",
