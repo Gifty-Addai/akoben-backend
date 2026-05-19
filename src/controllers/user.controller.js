@@ -11,17 +11,19 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 // Get User Profile
 export const getUserProfile = async (req, res, next) => {
-  const token = req.cookies["jwtRefreshToken"];
-
-  if (!token) {
-    return ApiResponse.sendError(res, 'No session of user found', 403);
-  }
-
-  console.log("token", token)
-
   try {
-    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
-    const id = decoded.userId;
+    // 1. Check if authenticated user info was populated by the middleware
+    let id = req.user?.id || req.user?.userId;
+
+    // 2. If not present (e.g. legacy cookie path), fallback to decoding refresh cookie
+    if (!id) {
+      const token = req.cookies["jwtRefreshToken"];
+      if (!token) {
+        return ApiResponse.sendError(res, 'No session of user found', 403);
+      }
+      const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+      id = decoded.userId;
+    }
 
     if (!isValidObjectId(id)) {
       return ApiResponse.sendError(res, "Invalid user ID.", 400);
