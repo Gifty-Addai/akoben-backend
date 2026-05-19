@@ -27,6 +27,11 @@ const signup = async (req, res, next) => {
       return ApiResponse.sendError(res, 'Email already in use', 400);
     }
 
+    const existingPhone = await User.findOne({ phone });
+    if (existingPhone) {
+      return ApiResponse.sendError(res, 'Phone number already in use', 400);
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 

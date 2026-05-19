@@ -221,7 +221,13 @@ export const updateUserById = async (req, res, next) => {
     }
 
     if (name) user.name = name;
-    if (phone) user.phone = phone;
+    if (phone && phone !== user.phone) {
+      const existingPhone = await User.findOne({ phone, _id: { $ne: id } });
+      if (existingPhone) {
+        return ApiResponse.sendError(res, "Phone number is already in use by another account.", 400);
+      }
+      user.phone = phone;
+    }
     if (address) user.address = address;
     if (role) user.role = role;
 

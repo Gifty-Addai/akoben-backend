@@ -24,7 +24,7 @@ router.post('/sendOTP', sendOTPEnd);
 router.post('/verifyOTP', verifyOTPEnd);
 
 // Authenticated User Routes
-router.use(authenticate); // Apply authentication to all routes below
+router.use(verifyAccessToken); // Apply authentication to all routes below
 
 router.get('/getUserProfile', getUserProfile);
 router.put('/profile', updateUserProfile);

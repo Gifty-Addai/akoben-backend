@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     lowercase: true,
+    unique: true,
     match: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,
   },
   password: {
@@ -19,6 +20,7 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: true,
+    unique: true,
   },
     bookings: [{
       type: mongoose.Schema.Types.ObjectId,
