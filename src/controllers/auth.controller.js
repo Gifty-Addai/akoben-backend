@@ -95,13 +95,18 @@ const signin = async (req, res, next) => {
  */
 const logout = (req, res, next) => {
   try {
-    res.clearCookie('jwtRefreshToken', {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'none',
-      domain: '.fienefie.com',
       path: '/'
-    });
+    };
+
+    if (process.env.COOKIE_DOMAIN) {
+      cookieOptions.domain = process.env.COOKIE_DOMAIN;
+    }
+
+    res.clearCookie('jwtRefreshToken', cookieOptions);
 
     return ApiResponse.sendSuccess(res, 'Logged out successfully');
   } catch (error) {

@@ -34,14 +34,19 @@ export const generateTokens = (user) => {
  * @param {string} refreshToken - JWT refresh token
  */
 export const setRefreshTokenCookie = (res, refreshToken) => {
-  res.cookie('jwtRefreshToken', refreshToken, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'none',
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    domain: '.fienefie.com',
     path: '/'
-  });
+  };
+
+  if (process.env.COOKIE_DOMAIN) {
+    cookieOptions.domain = process.env.COOKIE_DOMAIN;
+  }
+
+  res.cookie('jwtRefreshToken', refreshToken, cookieOptions);
   console.log(`process.env.NODE_ENV : ${process.env.NODE_ENV === 'production'}`)
   console.log(`process.env.FRONTEND_URL : ${process.env.FRONTEND_URL}`)
 };
