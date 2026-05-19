@@ -11,16 +11,7 @@ import ApiResponse from '../lib/api-reponse.util.js';
  */
 export const verifyAccessToken = (req, res, next) => {
     try {
-        // Bypass auth if in development mode
-        if (process.env.NODE_ENV === 'development') {
-            console.warn("⚠️ AUTHENTICATION DISABLED IN DEVELOPMENT: Mocking Admin User ⚠️");
-            req.user = {
-                id: '507f1f77bcf86cd799439011', // Valid generic ObjectId
-                role: 'admin', // Mocking admin role
-                email: 'admin@example.com'
-            };
-            return next();
-        }
+
 
         const authHeader = req.headers.authorization;
 
