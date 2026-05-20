@@ -1,26 +1,11 @@
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { Readable } from 'stream';
 import ApiResponse from '../lib/api-reponse.util.js';
 import cloudinary from '../configs/cloudinary.config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Configure Multer storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '..', 'uploads');
-    fs.mkdirSync(uploadPath, { recursive: true });
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-    const sanitizedFilename = file.originalname.replace(/\s+/g, '_');
-    cb(null, `${uniqueSuffix}-${sanitizedFilename}`);
-  },
-});
+// Configure Multer storage to keep files in memory (essential for serverless read-only filesystems)
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -43,16 +28,21 @@ export const uploadImage = async (req, res, next) => {
       return ApiResponse.sendError(res, "No file uploaded", 400);
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'trip_images',
-    });
+    // Helper to upload a buffer to Cloudinary using upload_stream
+    const uploadFromBuffer = (fileBuffer) => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'trip_images' },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        Readable.from(fileBuffer).pipe(stream);
+      });
+    };
 
-    // Remove the file from the server after uploading to Cloudinary
-    fs.unlink(req.file.path, (err) => {
-      if (err) {
-        console.error('Failed to delete local image:', err);
-      }
-    });
+    const result = await uploadFromBuffer(req.file.buffer);
 
     // Respond with the Cloudinary image URL
     return ApiResponse.sendSuccess(res, "", { url: result.secure_url }, 200)
