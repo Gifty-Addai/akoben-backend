@@ -146,8 +146,8 @@ export const searchProducts = async (req, res, next) => {
             .limit(Number(limit));
 
         const totalProducts = await Product.countDocuments(filters);
-        const activeProducts = await Product.countDocuments({ isAvailable: true });
-        const inActiveProducts = await Product.countDocuments({ isAvailable: false });
+        const activeProducts = await Product.countDocuments({ ...filters, isAvailable: true });
+        const inActiveProducts = await Product.countDocuments({ ...filters, isAvailable: false });
 
 
         if (products.length === 0) {
