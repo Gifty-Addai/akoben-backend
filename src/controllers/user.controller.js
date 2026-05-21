@@ -107,7 +107,20 @@ export const confirmMembership = async (req, res, next) => {
 // Update User Profile (for the logged-in user)
 export const updateUserProfile = async (req, res, next) => {
   const { id } = req.user;
-  const { name, phone, address, preferences } = req.body;
+  const {
+    name,
+    email,
+    phone,
+    streetAddress,
+    address2,
+    city,
+    zipCode,
+    gender,
+    age,
+    dob,
+    currentPassword,
+    password,
+  } = req.body;
 
   try {
     if (!isValidObjectId(id)) {
@@ -124,22 +137,71 @@ export const updateUserProfile = async (req, res, next) => {
     }
 
     if (name) user.name = name;
-    if (phone) user.phone = phone;
-    if (address) user.address = address;
-    if (preferences) user.preferences = preferences;
+
+    if (email && email.toLowerCase() !== user.email) {
+      const existingEmail = await User.findOne({ email: email.toLowerCase(), _id: { $ne: id } });
+      if (existingEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is already in use by another account.",
+        });
+      }
+      user.email = email.toLowerCase();
+    }
+
+    if (phone && phone !== user.phone) {
+      const existingPhone = await User.findOne({ phone, _id: { $ne: id } });
+      if (existingPhone) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number is already in use by another account.",
+        });
+      }
+      user.phone = phone;
+    }
+
+    if (streetAddress !== undefined) user.streetAddress = streetAddress;
+    if (address2 !== undefined) user.address2 = address2;
+    if (city !== undefined) user.city = city;
+    if (zipCode !== undefined) user.zipCode = zipCode;
+    if (gender !== undefined) user.gender = gender;
+    if (age !== undefined) user.age = age;
+    if (dob !== undefined) user.dob = dob;
+
+    if (password) {
+      if (!currentPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Current password is required to change password.",
+        });
+      }
+      if (user.password) {
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+          return res.status(400).json({
+            success: false,
+            message: "Current password is incorrect.",
+          });
+        }
+      }
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "New password must be at least 6 characters long.",
+        });
+      }
+      user.password = await bcrypt.hash(password, 10);
+    }
 
     await user.save();
+
+    const updatedUser = user.toObject();
+    delete updatedUser.password;
 
     res.status(200).json({
       success: true,
       message: "Profile updated successfully.",
-      user: {
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        address: user.address,
-        preferences: user.preferences,
-      },
+      user: updatedUser,
     });
   } catch (error) {
     next(error);
