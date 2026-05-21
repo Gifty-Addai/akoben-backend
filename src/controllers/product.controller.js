@@ -68,21 +68,25 @@ export const getAllProducts = async (req, res, next) => {
 };
 
 export const getTallowProducts = async (req, res, next) => {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, all = false } = req.query;
 
     try {
-
-
         const skip = (page - 1) * limit;
+
+        const filter = { category: 'tallow' };
+        if (all !== 'true' && all !== true) {
+            filter.isAvailable = true;
+        }
 
         // Run queries in parallel to reduce latency
         const [products, totalTallowProducts, activeTallowProducts] = await Promise.all([
-            Product.find({ category: 'tallow' }).select('-clickCount').skip(skip).limit(Number(limit)),
-            Product.countDocuments({ category: 'tallow' }),
+            Product.find(filter).select('-clickCount').skip(skip).limit(Number(limit)),
+            Product.countDocuments(filter),
             Product.countDocuments({ category: 'tallow', isAvailable: true })
         ]);
 
-        const inActiveTallowProducts = totalTallowProducts - activeTallowProducts;
+        const totalAllTallowProducts = await Product.countDocuments({ category: 'tallow' });
+        const inActiveTallowProducts = totalAllTallowProducts - activeTallowProducts;
 
         return ApiResponse.sendSuccess(res, "", {
             products,
