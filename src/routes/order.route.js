@@ -6,13 +6,13 @@ import {
     getOrderById,
     updateOrderStatus
 } from '../controllers/order.controller.js';
-import { verifyAccessToken } from '../middlewares/verify-token.middleware.js';
+import { verifyAccessToken, verifyAccessTokenOptional } from '../middlewares/verify-token.middleware.js';
 import authorize from '../middlewares/authorization.middleware.js';
 
 const router = express.Router();
 
-// Public/User Routes (Protected by Auth)
-router.post('/', verifyAccessToken, createOrder);
+// Public/User Routes (Optional/Required Auth)
+router.post('/', verifyAccessTokenOptional, createOrder);
 router.get('/my-orders', verifyAccessToken, getUserOrders);
 
 // Admin Routes

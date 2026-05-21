@@ -9,7 +9,7 @@ const FREE_SHIPPING_THRESHOLD = 100;
 export const createOrder = async (req, res, next) => {
     try {
         const { products, deliveryMethod, shippingAddress, pickupLocation, paymentMethod } = req.body;
-        const userId = req.user.userId || req.user.id || req.user._id;
+        const userId = req.user ? (req.user.userId || req.user.id || req.user._id) : undefined;
 
         if (!products || products.length === 0) {
             return ApiResponse.sendError(res, "Order must contain at least one product", 400);

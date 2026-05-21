@@ -36,3 +36,27 @@ export const verifyAccessToken = (req, res, next) => {
         return ApiResponse.sendError(res, 'Invalid access token', 401);
     }
 };
+
+/**
+ * Middleware to optionally verify an Access Token.
+ * If a token is provided and is valid, attaches the decoded user info to req.user.
+ * If no token is provided, or if the token is invalid/expired, it proceeds without setting req.user.
+ */
+export const verifyAccessTokenOptional = (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+            req.user = {
+                ...decoded,
+                id: decoded.userId
+            };
+        }
+        next();
+    } catch (error) {
+        // Log error but proceed without setting req.user to allow guest checkout
+        console.warn("Optional access token verification skipped/failed:", error.message);
+        next();
+    }
+};

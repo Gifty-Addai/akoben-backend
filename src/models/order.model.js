@@ -56,7 +56,10 @@ const orderSchema = new mongoose.Schema({
         city: { type: String },
         zipCode: { type: String },
         country: { type: String, default: 'Ghana' },
-        landmark: { type: String }
+        landmark: { type: String },
+        latitude: { type: Number },
+        longitude: { type: Number },
+        googleMapsLink: { type: String }
     },
     pickupLocation: {
         type: String,
