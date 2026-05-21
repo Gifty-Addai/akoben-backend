@@ -80,6 +80,18 @@ const signin = async (req, res, next) => {
       return ApiResponse.sendError(res, 'Invalid credentials', 400);
     }
 
+    // Check if OTP verification is bypassed for this user
+    if (user.bypassOTP === true) {
+      const { accessToken, refreshToken } = generateTokens(user);
+      setRefreshTokenCookie(res, refreshToken);
+      return ApiResponse.sendSuccess(res, 'Login successful', {
+        accessToken,
+        refreshToken,
+        user: { id: user._id, name: user.name, role: user.role },
+        otpDisabled: true
+      });
+    }
+
     const responseData = await sendOTP(phone, 'This is OTP from Fie ne fie, %otp_code%');
 
 
