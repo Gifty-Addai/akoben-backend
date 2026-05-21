@@ -121,7 +121,7 @@ const logout = (req, res, next) => {
  */
 const refreshAccessToken = async (req, res, next) => {
   try {
-    const refreshToken = req.cookies.jwtRefreshToken;
+    const refreshToken = req.cookies.jwtRefreshToken || req.headers['x-refresh-token'] || req.body?.refreshToken;
     if (!refreshToken) {
       return ApiResponse.sendError(res, 'Unable to get user session', 403);
     }

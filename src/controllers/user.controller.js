@@ -291,6 +291,7 @@ export const verifyOTPEnd = async (req, res, next) => {
 
     return ApiResponse.sendSuccess(res, "OTP verified successfully", {
       accessToken,
+      refreshToken,
       user: { id: user._id, name: user.name, role: user.role },
       responseData
     });

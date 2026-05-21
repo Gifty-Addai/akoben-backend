@@ -26,6 +26,7 @@ import ApiResponse from "./src/lib/api-reponse.util.js";
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const port = process.env.PORT || 3000;
 const __dirname = path.resolve();
 
@@ -53,7 +54,7 @@ app.use(cors({
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'x-refresh-token'],
   preflightContinue: false,
   credentials: true,
   optionsSuccessStatus: 204
