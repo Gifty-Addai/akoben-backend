@@ -22,6 +22,23 @@ const upload = multer({
   },
 });
 
+// Video-specific multer config (up to 100 MB)
+const videoUpload = multer({
+  storage: storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+
+  fileFilter: function (req, file, cb) {
+    const filetypes = /mp4|mov|webm|avi|mkv/;
+    const mimetype = /video\//.test(file.mimetype.toLowerCase());
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Only video files (mp4, mov, webm, avi, mkv) are allowed!'));
+  },
+});
+
 export const uploadImage = async (req, res, next) => {
   try {
     if (!req.file) {
@@ -54,3 +71,33 @@ export const uploadImage = async (req, res, next) => {
 
 // Middleware to handle Multer upload
 export const uploadSingleImage = upload.single('file');
+
+// ── Video upload ──────────────────────────────────────────────────────────────
+export const uploadSingleVideo = videoUpload.single('file');
+
+export const uploadVideo = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return ApiResponse.sendError(res, 'No file uploaded', 400);
+    }
+
+    const uploadFromBuffer = (fileBuffer) => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'video_uploads', resource_type: 'video' },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        Readable.from(fileBuffer).pipe(stream);
+      });
+    };
+
+    const result = await uploadFromBuffer(req.file.buffer);
+    return ApiResponse.sendSuccess(res, '', { url: result.secure_url }, 200);
+  } catch (error) {
+    console.error('Video Upload Error:', error);
+    next(error);
+  }
+};

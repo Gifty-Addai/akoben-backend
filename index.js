@@ -16,6 +16,7 @@ import videoRoute from "./src/routes/video.route.js";
 import testimonyRoute from "./src/routes/testimony.route.js";
 import orderRoutes from "./src/routes/order.route.js";
 import adminRoute from './src/routes/admin.route.js';
+import settingsRoute from './src/routes/settings.route.js';
 
 import errorHandler from "./src/middlewares/exceptionHandler.middleware.js";
 import cookieParser from 'cookie-parser';
@@ -90,6 +91,7 @@ app.use("/api/video", videoRoute);
 app.use("/api/image", imageRoute);
 app.use("/api/testimony", testimonyRoute);
 app.use("/api/orders", orderRoutes);
+app.use("/api/settings", settingsRoute);
 
 app.use((req, res, next) => {
   ApiResponse.sendError(res, "Endpoint not found", 404);

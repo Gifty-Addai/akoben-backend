@@ -7,19 +7,19 @@ import {
     deleteVideo,
     searchVideos,
   } from '../controllers/video.controller.js';
+import { verifyAccessToken } from '../middlewares/verify-token.middleware.js';
+import authorize from '../middlewares/authorization.middleware.js';
   
 const router = express.Router();
 
-router.post('/createVideo', createVideo);
-
+// Public routes
 router.get('/getAllVideos', getAllVideos);
-
 router.get('/searchVideos', searchVideos);
-
 router.get('/getVideoById/:id', getVideoById);
 
-router.put('/updateVideo/:id', updateVideo);
-
-router.delete('/deleteVideo/:id', deleteVideo);
+// Protected Admin-only routes
+router.post('/createVideo', verifyAccessToken, authorize('admin'), createVideo);
+router.put('/updateVideo/:id', verifyAccessToken, authorize('admin'), updateVideo);
+router.delete('/deleteVideo/:id', verifyAccessToken, authorize('admin'), deleteVideo);
 
 export default router;

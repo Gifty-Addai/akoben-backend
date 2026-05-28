@@ -9,14 +9,28 @@ const videoSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  videoUrl: {
+  category: {
     type: String,
     required: true,
+    default: 'Cooking Oils',
+  },
+  thumbnail: {
+    type: String,
+    required: true,
+    default: '/thumbnails/cooking-1.jpg',
+  },
+  videoUrl: {
+    type: String,
+    required: false,
+  },
+  embedUrl: {
+    type: String,
+    required: false,
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
   },
   createdAt: {
     type: Date,
