@@ -27,7 +27,7 @@ export const createProduct = async (req, res, next) => {
                 description: formattedDescription,
                 price: price,
                 category: category,
-                subCategory: subCategory,
+                subCategory: category === 'tallow' ? (subCategory || 'Oils') : subCategory,
                 imageUrl: image,
                 isAvailable: isAvailable,
                 stock: stock
@@ -47,19 +47,21 @@ export const getAllProducts = async (req, res, next) => {
     const { page = 1, limit = 10 } = req.query;
 
     try {
-        const skip = (page - 1) * limit;
+        const pageNum = parseInt(page, 10) || 1;
+        const limitNum = parseInt(limit, 10) || 10;
+        const skip = (pageNum - 1) * limitNum;
 
         const products = await Product.find()
             .skip(skip)
-            .limit(Number(limit));
+            .limit(limitNum);
 
         const totalProducts = await Product.countDocuments();
         const activeProducts = await Product.countDocuments({ isAvailable: true });
 
         return ApiResponse.sendSuccess(res, "", {
             products,
-            currentPage: Number(page),
-            totalPages: Math.ceil(totalProducts / limit),
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalProducts / limitNum),
             totalProducts,
             activeProducts
         });
@@ -72,7 +74,9 @@ export const getTallowProducts = async (req, res, next) => {
     const { page = 1, limit = 10, all = false, subCategory } = req.query;
 
     try {
-        const skip = (page - 1) * limit;
+        const pageNum = parseInt(page, 10) || 1;
+        const limitNum = parseInt(limit, 10) || 10;
+        const skip = (pageNum - 1) * limitNum;
 
         const filter = { category: 'tallow' };
         if (subCategory) {
@@ -89,7 +93,7 @@ export const getTallowProducts = async (req, res, next) => {
 
         // Run queries in parallel to reduce latency
         const [products, totalTallowProducts, activeTallowProducts] = await Promise.all([
-            Product.find(filter).select('-clickCount').skip(skip).limit(Number(limit)),
+            Product.find(filter).select('-clickCount').skip(skip).limit(limitNum),
             Product.countDocuments(filter),
             Product.countDocuments(activeFilter)
         ]);
@@ -103,8 +107,8 @@ export const getTallowProducts = async (req, res, next) => {
 
         return ApiResponse.sendSuccess(res, "", {
             products,
-            currentPage: Number(page),
-            totalPages: Math.ceil(totalTallowProducts / limit),
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalTallowProducts / limitNum),
             totalProducts: totalTallowProducts,
             activeProducts: activeTallowProducts,
             inActiveProducts: inActiveTallowProducts
@@ -136,11 +140,10 @@ export const searchProducts = async (req, res, next) => {
     let { name, category, subCategory, minPrice, maxPrice, isAvailable, page = 1, limit = 10 } = req.body;
 
     try {
+        const pageNum = parseInt(page, 10) || 1;
+        const limitNum = parseInt(limit, 10) || 10;
+        
         const filters = {};
-
-        if (name || category && page != 1) {
-            page = 1
-        }
 
         if (name) {
             filters.name = { $regex: new RegExp(name, 'i') };
@@ -156,12 +159,12 @@ export const searchProducts = async (req, res, next) => {
             filters.isAvailable = isAvailable === 'true' || isAvailable === true;
         }
 
-        const skip = (page - 1) * limit;
+        const skip = (pageNum - 1) * limitNum;
 
         // Query the database with pagination
         const products = await Product.find(filters)
             .skip(skip)
-            .limit(Number(limit));
+            .limit(limitNum);
 
         const totalProducts = await Product.countDocuments(filters);
         const activeProducts = await Product.countDocuments({ ...filters, isAvailable: true });
@@ -183,8 +186,8 @@ export const searchProducts = async (req, res, next) => {
 
             return ApiResponse.sendSuccess(res, "", {
                 products: randomProducts,
-                currentPage: Number(page),
-                totalPages: Math.ceil(totalProducts / limit),
+                currentPage: pageNum,
+                totalPages: Math.ceil(totalProducts / limitNum),
                 totalProducts: randomProducts.length,
                 isSuggestion: true,
                 activeProducts,
@@ -194,8 +197,8 @@ export const searchProducts = async (req, res, next) => {
 
         return ApiResponse.sendSuccess(res, "Product found", {
             products,
-            currentPage: Number(page),
-            totalPages: Math.ceil(totalProducts / limit),
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalProducts / limitNum),
             totalProducts,
             isSuggestion: false,
             activeProducts,
@@ -234,9 +237,13 @@ export const updateProduct = async (req, res, next) => {
             product.category = category;
             if (category !== 'tallow') {
                 product.subCategory = undefined;
+            } else if (!product.subCategory && !subCategory) {
+                product.subCategory = 'Oils';
             }
         }
-        if (subCategory !== undefined) product.subCategory = subCategory;
+        if (subCategory !== undefined) {
+            product.subCategory = subCategory || (product.category === 'tallow' ? 'Oils' : undefined);
+        }
         if (image) product.imageUrl = image;
         if (stock) product.stock = stock;
         if (isAvailable !== undefined) product.isAvailable = isAvailable;
