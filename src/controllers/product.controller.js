@@ -5,7 +5,7 @@ import ApiResponse from "../lib/api-reponse.util.js";
 
 export const createProduct = async (req, res, next) => {
 
-    const { name, description, price, category, image, stock, isAvailable } = req.body;
+    const { name, description, price, category, subCategory, image, stock, isAvailable } = req.body;
 
     if (!name || !description || !price) {
         return res.status(400).json({ message: "name, description, price, are required" });
@@ -27,6 +27,7 @@ export const createProduct = async (req, res, next) => {
                 description: formattedDescription,
                 price: price,
                 category: category,
+                subCategory: subCategory,
                 imageUrl: image,
                 isAvailable: isAvailable,
                 stock: stock
@@ -68,24 +69,36 @@ export const getAllProducts = async (req, res, next) => {
 };
 
 export const getTallowProducts = async (req, res, next) => {
-    const { page = 1, limit = 10, all = false } = req.query;
+    const { page = 1, limit = 10, all = false, subCategory } = req.query;
 
     try {
         const skip = (page - 1) * limit;
 
         const filter = { category: 'tallow' };
+        if (subCategory) {
+            filter.subCategory = subCategory;
+        }
         if (all !== 'true' && all !== true) {
             filter.isAvailable = true;
+        }
+
+        const activeFilter = { category: 'tallow', isAvailable: true };
+        if (subCategory) {
+            activeFilter.subCategory = subCategory;
         }
 
         // Run queries in parallel to reduce latency
         const [products, totalTallowProducts, activeTallowProducts] = await Promise.all([
             Product.find(filter).select('-clickCount').skip(skip).limit(Number(limit)),
             Product.countDocuments(filter),
-            Product.countDocuments({ category: 'tallow', isAvailable: true })
+            Product.countDocuments(activeFilter)
         ]);
 
-        const totalAllTallowProducts = await Product.countDocuments({ category: 'tallow' });
+        const totalAllTallowFilter = { category: 'tallow' };
+        if (subCategory) {
+            totalAllTallowFilter.subCategory = subCategory;
+        }
+        const totalAllTallowProducts = await Product.countDocuments(totalAllTallowFilter);
         const inActiveTallowProducts = totalAllTallowProducts - activeTallowProducts;
 
         return ApiResponse.sendSuccess(res, "", {
@@ -120,7 +133,7 @@ export const getProductById = async (req, res, next) => {
 };
 
 export const searchProducts = async (req, res, next) => {
-    let { name, category, minPrice, maxPrice, isAvailable, page = 1, limit = 10 } = req.body;
+    let { name, category, subCategory, minPrice, maxPrice, isAvailable, page = 1, limit = 10 } = req.body;
 
     try {
         const filters = {};
@@ -134,6 +147,7 @@ export const searchProducts = async (req, res, next) => {
         }
 
         if (category) filters.category = { $regex: new RegExp(category, 'i') };
+        if (subCategory) filters.subCategory = subCategory;
 
         if (minPrice) filters.price = { ...filters.price, $gte: Number(minPrice) };
         if (maxPrice) filters.price = { ...filters.price, $lte: Number(maxPrice) };
@@ -197,11 +211,11 @@ export const searchProducts = async (req, res, next) => {
 
 
 export const updateProduct = async (req, res, next) => {
-    const { name, description, price, category, image, stock, isAvailable } = req.body;
+    const { name, description, price, category, subCategory, image, stock, isAvailable } = req.body;
     const { id } = req.params;
 
-    if (!name && !description && !price && !category && !image && !isAvailable) {
-        return ApiResponse.sendError(res, "At least one field (name, description, price, category, image, isAvailable) must be provided to update", 400);
+    if (!name && !description && !price && !category && subCategory === undefined && !image && !isAvailable) {
+        return ApiResponse.sendError(res, "At least one field (name, description, price, category, subCategory, image, isAvailable) must be provided to update", 400);
     }
 
     try {
@@ -216,7 +230,13 @@ export const updateProduct = async (req, res, next) => {
         if (name) product.name = name;
         if (description) product.description = description;
         if (price) product.price = price;
-        if (category) product.category = category;
+        if (category) {
+            product.category = category;
+            if (category !== 'tallow') {
+                product.subCategory = undefined;
+            }
+        }
+        if (subCategory !== undefined) product.subCategory = subCategory;
         if (image) product.imageUrl = image;
         if (stock) product.stock = stock;
         if (isAvailable !== undefined) product.isAvailable = isAvailable;

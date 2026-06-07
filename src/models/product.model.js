@@ -19,6 +19,10 @@ const productSchema = new mongoose.Schema({
     required: false,
     default: "accessories"
   },
+  subCategory: {
+    type: String,
+    required: false
+  },
   stock: {
     type: Number,
     required: false,
@@ -53,6 +57,7 @@ const productSchema = new mongoose.Schema({
 // Add indexes for faster queries
 productSchema.index({ category: 1 });
 productSchema.index({ category: 1, isAvailable: 1 });
+productSchema.index({ category: 1, subCategory: 1, isAvailable: 1 });
 
 const Product = mongoose.model('Product', productSchema);
 
